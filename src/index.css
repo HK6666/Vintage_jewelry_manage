@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'Montserrat', sans-serif;
+  background: #FBF8F1;
+  color: #2B241D;
+}
+
+/* Sidebar */
+.sidebar-link {
+  transition: all 0.25s ease;
+}
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: linear-gradient(135deg, rgba(196, 135, 46, 0.1), rgba(139, 34, 64, 0.05));
+  color: #C4872E;
+}
+.sidebar-link.active {
+  border-right: 3px solid #C4872E;
+}
+
+/* Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(237, 227, 204, 0.6);
+  transition: all 0.3s ease;
+}
+.glass-card:hover {
+  box-shadow: 0 8px 32px rgba(196, 135, 46, 0.08);
+}
+
+/* Stat Card */
+.stat-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(251, 248, 241, 0.9));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 227, 204, 0.5);
+}
+
+/* Tag */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Input Field */
+.input-field {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #E0D3B3;
+  transition: all 0.2s ease;
+}
+.input-field:focus {
+  outline: none;
+  border-color: #C4872E;
+  box-shadow: 0 0 0 3px rgba(196, 135, 46, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #C4872E, #A06B1E);
+  color: white;
+  transition: all 0.25s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(196, 135, 46, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #E0D3B3;
+  color: #6B5B4A;
+  transition: all 0.25s ease;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #C4872E;
+  color: #C4872E;
+}
+
+/* Table */
+.table-row {
+  transition: background 0.2s ease;
+}
+.table-row:hover {
+  background: rgba(196, 135, 46, 0.04);
+}
+
+/* D3 Graphs */
+.correlation-line {
+  stroke: #C4872E;
+  stroke-opacity: 0.3;
+  fill: none;
+}
+.node-circle {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.node-circle:hover {
+  filter: brightness(1.1);
+}
+
+/* Knowledge Graph */
+.knowledge-graph {
+  width: 100%;
+  height: 600px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D5CCC0;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8AA98;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Fade In Animation */
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tooltip */
+.graph-tooltip {
+  position: absolute;
+  background: rgba(43, 36, 29, 0.9);
+  color: #FBF8F1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(196, 135, 46, 0.2);
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 30;
+}
+@media (max-width: 1023px) {
+  .sidebar-overlay.active {
+    display: block;
+  }
+}

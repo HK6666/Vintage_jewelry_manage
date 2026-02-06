@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/search.py:*)",
+      "Bash(npm install)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build:*)",
+      "Bash(curl:*)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}

@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>珍藏阁 - 中古首饰管理平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#FFF8F0', 100: '#FFEFD6', 200: '#FFD9A0', 300: '#FFBF6B', 400: '#E8A44A', 500: '#C4872E', 600: '#A06B1E', 700: '#7A5018', 800: '#573913', 900: '#3A250D' },
+                        accent: { 50: '#FDF2F4', 100: '#F9E0E5', 200: '#F0BFC8', 300: '#E4939F', 400: '#D4667A', 500: '#8B2240', 600: '#741C36', 700: '#5D162B', 800: '#461020', 900: '#300B16' },
+                        ivory: { 50: '#FEFDFB', 100: '#FBF8F1', 200: '#F5EFE0', 300: '#EDE3CC', 400: '#E0D3B3', 500: '#C9B896', 600: '#A89672', 700: '#877658', 800: '#655842', 900: '#453C2E' },
+                        ink: { 50: '#F7F5F3', 100: '#EBE6E0', 200: '#D5CCC0', 300: '#B8AA98', 400: '#98856E', 500: '#6B5B4A', 600: '#534738', 700: '#3E352A', 800: '#2B241D', 900: '#1A1613' }
+                    },
+                    fontFamily: {
+                        heading: ['"Noto Serif SC"', '"Cormorant"', 'serif'],
+                        body: ['"Noto Sans SC"', '"Montserrat"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans SC', 'Montserrat', sans-serif; background: #FBF8F1; color: #2B241D; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .sidebar-link { transition: all 0.25s ease; }
+        .sidebar-link:hover, .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(196, 135, 46, 0.1), rgba(139, 34, 64, 0.05));
+            color: #C4872E;
+        }
+        .sidebar-link.active { border-right: 3px solid #C4872E; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(237, 227, 204, 0.6);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover { box-shadow: 0 8px 32px rgba(196, 135, 46, 0.08); }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(251, 248, 241, 0.9));
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(237, 227, 204, 0.5);
+        }
+        .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .knowledge-graph { width: 100%; height: 600px; }
+        .input-field {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid #E0D3B3;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #C4872E;
+            box-shadow: 0 0 0 3px rgba(196, 135, 46, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #C4872E, #A06B1E);
+            color: white;
+            transition: all 0.25s ease;
+        }
+        .btn-primary:hover { box-shadow: 0 4px 16px rgba(196, 135, 46, 0.3); transform: translateY(-1px); }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #E0D3B3;
+            color: #6B5B4A;
+            transition: all 0.25s ease;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.95); border-color: #C4872E; color: #C4872E; }
+        .table-row { transition: background 0.2s ease; }
+        .table-row:hover { background: rgba(196, 135, 46, 0.04); }
+        .correlation-line { stroke: #C4872E; stroke-opacity: 0.3; fill: none; }
+        .node-circle { cursor: pointer; transition: all 0.3s ease; }
+        .node-circle:hover { filter: brightness(1.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #D5CCC0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #B8AA98; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+        .fade-in { animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .tooltip {
+            position: absolute;
+            background: rgba(43, 36, 29, 0.9);
+            color: #FBF8F1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(196, 135, 46, 0.2);
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 30;
+        }
+        @media (max-width: 1023px) {
+            .sidebar-overlay.active { display: block; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+<!-- Mobile Header -->
+<header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-ivory-200">
+    <div class="flex items-center justify-between px-4 h-14">
+        <button id="menuToggle" class="p-2 rounded-lg hover:bg-ivory-100 cursor-pointer" aria-label="打开菜单">
+            <svg class="w-5 h-5 text-ink-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+        </button>
+        <span class="font-heading text-lg font-semibold text-ink-800">珍藏阁</span>
+        <div class="w-9"></div>
+    </div>
+</header>
+
+<!-- Sidebar Overlay -->
+<div id="sidebarOverlay" class="sidebar-overlay" role="presentation"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed left-0 top-0 bottom-0 w-64 bg-white/70 backdrop-blur-xl border-r border-ivory-200 z-40 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+    <!-- Logo -->
+    <div class="px-6 py-6 border-b border-ivory-200/60">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+            </div>
+            <div>
+                <h1 class="font-heading text-xl font-bold text-ink-800 tracking-wide">珍藏阁</h1>
+                <p class="text-xs text-ink-400 font-body">中古首饰管理平台</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        <a href="#" data-page="home" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+            <span>首页概览</span>
+        </a>
+        <a href="#" data-page="analytics" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-ink-500 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+            <span>数据分析</span>
+        </a>
+        <a href="#" data-page="entry" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-ink-500 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>藏品录入</span>
+        </a>
+        <a href="#" data-page="list" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-ink-500 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+            <span>藏品列表</span>
+        </a>
+        <a href="#" data-page="correlation" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-ink-500 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+            <span>藏品关联</span>
+        </a>
+        <a href="#" data-page="knowledge" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-ink-500 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"/></svg>
+            <span>知识图谱</span>
+        </a>
+    </nav>
+
+    <!-- User -->
+    <div class="px-4 py-4 border-t border-ivory-200/60">
+        <div class="flex items-center gap-3 px-2">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-300 to-accent-400 flex items-center justify-center">
+                <span class="text-white text-sm font-semibold">鉴</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-ink-700 truncate">鉴赏师</p>
+                <p class="text-xs text-ink-400 truncate">高级管理员</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="lg:ml-64 min-h-screen pt-14 lg:pt-0">
+    <div class="max-w-[1400px] mx-auto">
+
+        <!-- ==================== PAGE: HOME ==================== -->
+        <div id="page-home" class="page active fade-in">
+            <!-- Header -->
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div>
+                        <h2 class="font-heading text-3xl font-bold text-ink-800">首页概览</h2>
+                        <p class="text-ink-400 mt-1 text-sm">欢迎回来，这里是您的藏品世界</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-ink-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                        <span>2026年2月6日</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="px-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <div class="stat-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-ink-400 text-sm">藏品总量</span>
+                        <div class="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-ink-800 font-heading">1,284</p>
+                    <p class="text-xs text-primary-500 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/></svg>
+                        较上月 +23
+                    </p>
+                </div>
+                <div class="stat-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-ink-400 text-sm">估值总额</span>
+                        <div class="w-9 h-9 rounded-xl bg-accent-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-ink-800 font-heading">¥8.6M</p>
+                    <p class="text-xs text-primary-500 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/></svg>
+                        估值增长 12.3%
+                    </p>
+                </div>
+                <div class="stat-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-ink-400 text-sm">年代跨度</span>
+                        <div class="w-9 h-9 rounded-xl bg-ivory-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-ink-800 font-heading">6</p>
+                    <p class="text-xs text-ink-400 mt-1">唐 · 宋 · 元 · 明 · 清 · 近代</p>
+                </div>
+                <div class="stat-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-ink-400 text-sm">本月新增</span>
+                        <div class="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold text-ink-800 font-heading">47</p>
+                    <p class="text-xs text-primary-500 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/></svg>
+                        较上月 +8
+                    </p>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="lg:col-span-2 glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-heading text-lg font-semibold text-ink-800">藏品入库趋势</h3>
+                        <div class="flex gap-2">
+                            <button class="text-xs px-3 py-1.5 rounded-lg bg-primary-500 text-white cursor-pointer">月度</button>
+                            <button class="text-xs px-3 py-1.5 rounded-lg text-ink-400 hover:bg-ivory-100 cursor-pointer">季度</button>
+                        </div>
+                    </div>
+                    <canvas id="trendChart" height="220"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-6">品类分布</h3>
+                    <canvas id="categoryChart" height="220"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent & Top -->
+            <div class="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
+                <!-- Recent Items -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="font-heading text-lg font-semibold text-ink-800">最近录入</h3>
+                        <button onclick="navigateTo('list')" class="text-xs text-primary-500 hover:text-primary-600 cursor-pointer">查看全部</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-200 to-primary-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-ink-800 truncate">清代翡翠镶金步摇</p>
+                                <p class="text-xs text-ink-400 mt-0.5">清 · 乾隆年间 · 翡翠</p>
+                            </div>
+                            <span class="tag bg-primary-50 text-primary-600">¥125,000</span>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-100 to-accent-50 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-ink-800 truncate">明代白玉龙纹佩</p>
+                                <p class="text-xs text-ink-400 mt-0.5">明 · 万历年间 · 白玉</p>
+                            </div>
+                            <span class="tag bg-accent-50 text-accent-600">¥268,000</span>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-ivory-300 to-ivory-200 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-ink-800 truncate">宋代金丝点翠凤冠</p>
+                                <p class="text-xs text-ink-400 mt-0.5">宋 · 南宋 · 黄金/翠羽</p>
+                            </div>
+                            <span class="tag bg-ivory-200 text-ink-600">¥580,000</span>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-200 to-primary-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-ink-800 truncate">唐代鎏金银簪</p>
+                                <p class="text-xs text-ink-400 mt-0.5">唐 · 盛唐 · 银/鎏金</p>
+                            </div>
+                            <span class="tag bg-primary-50 text-primary-600">¥95,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top by Era -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-5">年代藏量分布</h3>
+                    <canvas id="eraChart" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAGE: ANALYTICS ==================== -->
+        <div id="page-analytics" class="page fade-in">
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <h2 class="font-heading text-3xl font-bold text-ink-800">数据分析</h2>
+                <p class="text-ink-400 mt-1 text-sm">深度洞察您的藏品数据</p>
+            </div>
+
+            <!-- Summary stats -->
+            <div class="px-6 md:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-sm text-ink-400">平均估值</p>
+                    <p class="text-2xl font-bold text-ink-800 font-heading mt-1">¥67K</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-sm text-ink-400">最高估值</p>
+                    <p class="text-2xl font-bold text-accent-500 font-heading mt-1">¥2.8M</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-sm text-ink-400">材质种类</p>
+                    <p class="text-2xl font-bold text-ink-800 font-heading mt-1">32</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-sm text-ink-400">产地覆盖</p>
+                    <p class="text-2xl font-bold text-ink-800 font-heading mt-1">18</p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">估值分布 (按材质)</h3>
+                    <canvas id="materialValueChart" height="280"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">年代 × 品类 热力图</h3>
+                    <canvas id="heatmapChart" height="280"></canvas>
+                </div>
+            </div>
+            <div class="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">保存状态</h3>
+                    <canvas id="conditionChart" height="240"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">入手渠道</h3>
+                    <canvas id="sourceChart" height="240"></canvas>
+                </div>
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">估值趋势 (近12月)</h3>
+                    <canvas id="valueTrendChart" height="240"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAGE: ENTRY ==================== -->
+        <div id="page-entry" class="page fade-in">
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <h2 class="font-heading text-3xl font-bold text-ink-800">藏品录入</h2>
+                <p class="text-ink-400 mt-1 text-sm">记录每一件珍贵的藏品信息</p>
+            </div>
+
+            <div class="px-6 md:px-8 pb-10">
+                <div class="glass-card rounded-2xl p-6 md:p-8 max-w-4xl">
+                    <!-- Step indicator -->
+                    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-ivory-200/60">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-semibold">1</div>
+                            <span class="text-sm font-medium text-ink-700">基本信息</span>
+                        </div>
+                        <div class="flex-1 h-px bg-ivory-300"></div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-ivory-300 text-ink-500 flex items-center justify-center text-sm font-semibold">2</div>
+                            <span class="text-sm text-ink-400">详细参数</span>
+                        </div>
+                        <div class="flex-1 h-px bg-ivory-300"></div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-ivory-300 text-ink-500 flex items-center justify-center text-sm font-semibold">3</div>
+                            <span class="text-sm text-ink-400">影像资料</span>
+                        </div>
+                    </div>
+
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">藏品名称 <span class="text-accent-500">*</span></label>
+                                <input type="text" placeholder="例：清代翡翠镶金步摇" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">编号</label>
+                                <input type="text" placeholder="自动生成或手动输入" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">年代 <span class="text-accent-500">*</span></label>
+                                <select class="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]">
+                                    <option value="">请选择年代</option>
+                                    <option>唐代 (618-907)</option>
+                                    <option>宋代 (960-1279)</option>
+                                    <option>元代 (1271-1368)</option>
+                                    <option>明代 (1368-1644)</option>
+                                    <option>清代 (1644-1912)</option>
+                                    <option>近代 (1912-)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">品类 <span class="text-accent-500">*</span></label>
+                                <select class="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]">
+                                    <option value="">请选择品类</option>
+                                    <option>簪钗</option>
+                                    <option>步摇</option>
+                                    <option>耳饰</option>
+                                    <option>项链</option>
+                                    <option>手镯</option>
+                                    <option>戒指</option>
+                                    <option>佩饰</option>
+                                    <option>凤冠</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">主要材质</label>
+                                <select class="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]">
+                                    <option value="">请选择材质</option>
+                                    <option>黄金</option>
+                                    <option>白银</option>
+                                    <option>翡翠</option>
+                                    <option>白玉</option>
+                                    <option>珍珠</option>
+                                    <option>玛瑙</option>
+                                    <option>琥珀</option>
+                                    <option>珊瑚</option>
+                                    <option>翠羽</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">估值 (¥)</label>
+                                <input type="number" placeholder="输入估值金额" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">保存状态</label>
+                                <select class="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]">
+                                    <option value="">请选择</option>
+                                    <option>完好</option>
+                                    <option>良好</option>
+                                    <option>一般</option>
+                                    <option>需修复</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">入手渠道</label>
+                                <input type="text" placeholder="例：拍卖行、私人转让" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink-600 mb-2">入手日期</label>
+                                <input type="date" class="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-ink-600 mb-2">藏品描述</label>
+                            <textarea rows="4" placeholder="描述藏品的工艺特点、历史背景、纹饰图案等详细信息..." class="input-field w-full rounded-xl px-4 py-3 text-sm resize-none"></textarea>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div>
+                            <label class="block text-sm font-medium text-ink-600 mb-2">藏品图片</label>
+                            <div class="border-2 border-dashed border-ivory-400 rounded-xl p-8 text-center hover:border-primary-400 transition-colors cursor-pointer">
+                                <svg class="w-10 h-10 text-ink-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21zM10.5 8.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                <p class="text-sm text-ink-400">点击或拖拽上传图片</p>
+                                <p class="text-xs text-ink-300 mt-1">支持 JPG、PNG 格式，单张不超过 10MB</p>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div>
+                            <label class="block text-sm font-medium text-ink-600 mb-2">标签</label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="tag bg-primary-50 text-primary-600 cursor-pointer hover:bg-primary-100">宫廷 <svg class="w-3 h-3 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></span>
+                                <span class="tag bg-accent-50 text-accent-600 cursor-pointer hover:bg-accent-100">镶嵌 <svg class="w-3 h-3 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></span>
+                            </div>
+                            <input type="text" placeholder="输入标签后按回车添加" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+                        </div>
+
+                        <div class="flex items-center gap-4 pt-4">
+                            <button type="button" class="btn-primary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer">保存藏品</button>
+                            <button type="button" class="btn-secondary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer">保存并继续</button>
+                            <button type="reset" class="text-sm text-ink-400 hover:text-ink-600 cursor-pointer ml-auto">重置表单</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAGE: LIST ==================== -->
+        <div id="page-list" class="page fade-in">
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="font-heading text-3xl font-bold text-ink-800">藏品列表</h2>
+                        <p class="text-ink-400 mt-1 text-sm">共 1,284 件藏品</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <svg class="w-4 h-4 text-ink-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                            <input type="text" placeholder="搜索藏品..." class="input-field rounded-xl pl-10 pr-4 py-2.5 text-sm w-64">
+                        </div>
+                        <button class="btn-secondary p-2.5 rounded-xl cursor-pointer" title="筛选">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
+                        </button>
+                        <button onclick="navigateTo('entry')" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            录入
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tags -->
+            <div class="px-6 md:px-8 flex flex-wrap gap-2 mb-6">
+                <button class="tag bg-primary-500 text-white cursor-pointer">全部</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">簪钗</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">步摇</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">耳饰</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">项链</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">手镯</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">佩饰</button>
+                <button class="tag bg-white text-ink-500 border border-ivory-300 hover:border-primary-400 hover:text-primary-500 cursor-pointer">凤冠</button>
+            </div>
+
+            <!-- Table -->
+            <div class="px-6 md:px-8 pb-10">
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-ivory-200/60">
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">藏品</th>
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">年代</th>
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">品类</th>
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">材质</th>
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">估值</th>
+                                    <th class="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">状态</th>
+                                    <th class="text-right px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="collectionTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="flex items-center justify-between px-6 py-4 border-t border-ivory-200/60">
+                        <span class="text-sm text-ink-400">显示 1-10 共 1,284 条</span>
+                        <div class="flex items-center gap-1">
+                            <button class="px-3 py-1.5 rounded-lg text-sm text-ink-400 hover:bg-ivory-100 cursor-pointer">上一页</button>
+                            <button class="px-3 py-1.5 rounded-lg text-sm bg-primary-500 text-white cursor-pointer">1</button>
+                            <button class="px-3 py-1.5 rounded-lg text-sm text-ink-500 hover:bg-ivory-100 cursor-pointer">2</button>
+                            <button class="px-3 py-1.5 rounded-lg text-sm text-ink-500 hover:bg-ivory-100 cursor-pointer">3</button>
+                            <span class="text-ink-300 px-1">...</span>
+                            <button class="px-3 py-1.5 rounded-lg text-sm text-ink-500 hover:bg-ivory-100 cursor-pointer">129</button>
+                            <button class="px-3 py-1.5 rounded-lg text-sm text-ink-400 hover:bg-ivory-100 cursor-pointer">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAGE: CORRELATION ==================== -->
+        <div id="page-correlation" class="page fade-in">
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <h2 class="font-heading text-3xl font-bold text-ink-800">藏品关联</h2>
+                <p class="text-ink-400 mt-1 text-sm">探索藏品之间的隐秘联系</p>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="px-6 md:px-8 flex flex-wrap gap-3 mb-6">
+                <select class="input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem] pr-10">
+                    <option>关联维度：材质</option>
+                    <option>关联维度：年代</option>
+                    <option>关联维度：工艺</option>
+                    <option>关联维度：产地</option>
+                </select>
+                <select class="input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem] pr-10">
+                    <option>年代：全部</option>
+                    <option>唐代</option>
+                    <option>宋代</option>
+                    <option>明代</option>
+                    <option>清代</option>
+                </select>
+                <button class="btn-secondary px-4 py-2.5 rounded-xl text-sm cursor-pointer">重新分析</button>
+            </div>
+
+            <div class="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+                <!-- Correlation Graph -->
+                <div class="lg:col-span-2 glass-card rounded-2xl p-6">
+                    <h3 class="font-heading text-lg font-semibold text-ink-800 mb-4">关联网络图</h3>
+                    <div id="correlationGraph" class="w-full" style="height: 500px;"></div>
+                </div>
+
+                <!-- Correlation Details -->
+                <div class="space-y-5">
+                    <div class="glass-card rounded-2xl p-5">
+                        <h4 class="font-heading font-semibold text-ink-800 mb-4">强关联组</h4>
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl bg-primary-50/50 border border-primary-100">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-medium text-ink-700">翡翠 - 清宫廷</span>
+                                    <span class="text-xs font-semibold text-primary-600">92%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-ivory-200 rounded-full"><div class="h-full bg-primary-400 rounded-full" style="width: 92%"></div></div>
+                                <p class="text-xs text-ink-400 mt-1.5">共 156 件藏品共享此关联</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-accent-50/50 border border-accent-100">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-medium text-ink-700">金丝 - 点翠工艺</span>
+                                    <span class="text-xs font-semibold text-accent-600">87%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-ivory-200 rounded-full"><div class="h-full bg-accent-400 rounded-full" style="width: 87%"></div></div>
+                                <p class="text-xs text-ink-400 mt-1.5">共 98 件藏品共享此关联</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-ivory-100/50 border border-ivory-200">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-medium text-ink-700">白玉 - 明代佩饰</span>
+                                    <span class="text-xs font-semibold text-ink-600">78%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-ivory-200 rounded-full"><div class="h-full bg-ink-400 rounded-full" style="width: 78%"></div></div>
+                                <p class="text-xs text-ink-400 mt-1.5">共 72 件藏品共享此关联</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-5">
+                        <h4 class="font-heading font-semibold text-ink-800 mb-4">关联洞察</h4>
+                        <div class="space-y-3">
+                            <div class="flex gap-3">
+                                <div class="w-1 rounded-full bg-primary-400 flex-shrink-0"></div>
+                                <p class="text-sm text-ink-500">清代翡翠饰品多采用镶嵌工艺，与宫廷风格高度关联</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-1 rounded-full bg-accent-400 flex-shrink-0"></div>
+                                <p class="text-sm text-ink-500">金丝工艺在明清两代步摇中出现频率最高</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-1 rounded-full bg-ink-300 flex-shrink-0"></div>
+                                <p class="text-sm text-ink-500">白玉佩饰集中于明代中后期，多为文人风格</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAGE: KNOWLEDGE ==================== -->
+        <div id="page-knowledge" class="page fade-in">
+            <div class="px-6 md:px-8 pt-8 pb-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="font-heading text-3xl font-bold text-ink-800">知识图谱</h2>
+                        <p class="text-ink-400 mt-1 text-sm">可视化藏品间的多维知识网络</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="btn-secondary px-4 py-2 rounded-xl text-sm cursor-pointer flex items-center gap-2" id="zoomIn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"/></svg>
+                            放大
+                        </button>
+                        <button class="btn-secondary px-4 py-2 rounded-xl text-sm cursor-pointer flex items-center gap-2" id="zoomOut">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6"/></svg>
+                            缩小
+                        </button>
+                        <button class="btn-secondary px-4 py-2 rounded-xl text-sm cursor-pointer" id="resetGraph">重置视图</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="px-6 md:px-8 flex flex-wrap gap-4 mb-4">
+                <div class="flex items-center gap-2 text-sm text-ink-500">
+                    <span class="w-3 h-3 rounded-full bg-[#C4872E]"></span> 藏品
+                </div>
+                <div class="flex items-center gap-2 text-sm text-ink-500">
+                    <span class="w-3 h-3 rounded-full bg-[#8B2240]"></span> 年代
+                </div>
+                <div class="flex items-center gap-2 text-sm text-ink-500">
+                    <span class="w-3 h-3 rounded-full bg-[#4A7C59]"></span> 材质
+                </div>
+                <div class="flex items-center gap-2 text-sm text-ink-500">
+                    <span class="w-3 h-3 rounded-full bg-[#5B6ABF]"></span> 工艺
+                </div>
+                <div class="flex items-center gap-2 text-sm text-ink-500">
+                    <span class="w-3 h-3 rounded-full bg-[#B8860B]"></span> 品类
+                </div>
+            </div>
+
+            <!-- Knowledge Graph -->
+            <div class="px-6 md:px-8 pb-10">
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div id="knowledgeGraph" class="knowledge-graph"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Tooltip (shared) -->
+<div id="graphTooltip" class="tooltip" style="display: none;"></div>
+
+<script>
+// ============================
+// Navigation
+// ============================
+const sidebarLinks = document.querySelectorAll('.sidebar-link');
+const pages = document.querySelectorAll('.page');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const menuToggle = document.getElementById('menuToggle');
+
+function navigateTo(pageName) {
+    pages.forEach(p => p.classList.remove('active'));
+    sidebarLinks.forEach(l => { l.classList.remove('active'); l.classList.add('text-ink-500'); });
+    document.getElementById('page-' + pageName).classList.add('active');
+    const activeLink = document.querySelector(`[data-page="${pageName}"]`);
+    if (activeLink) { activeLink.classList.add('active'); activeLink.classList.remove('text-ink-500'); }
+    closeMobileSidebar();
+    // Init charts/graphs when page becomes active
+    if (pageName === 'home') initHomeCharts();
+    if (pageName === 'analytics') initAnalyticsCharts();
+    if (pageName === 'list') initTable();
+    if (pageName === 'correlation') initCorrelationGraph();
+    if (pageName === 'knowledge') initKnowledgeGraph();
+}
+
+sidebarLinks.forEach(link => {
+    link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.page); });
+});
+
+function closeMobileSidebar() {
+    sidebar.classList.add('-translate-x-full');
+    sidebarOverlay.classList.remove('active');
+}
+menuToggle.addEventListener('click', () => {
+    sidebar.classList.remove('-translate-x-full');
+    sidebarOverlay.classList.add('active');
+});
+sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+// ============================
+// Chart Config
+// ============================
+const chartColors = {
+    gold: '#C4872E', goldLight: '#E8A44A', goldBg: 'rgba(196, 135, 46, 0.1)',
+    wine: '#8B2240', wineLight: '#D4667A', wineBg: 'rgba(139, 34, 64, 0.1)',
+    ivory: '#E0D3B3', ink: '#2B241D', inkLight: '#6B5B4A',
+    green: '#4A7C59', blue: '#5B6ABF', amber: '#B8860B',
+    gridColor: 'rgba(237, 227, 204, 0.5)',
+};
+
+const defaultScales = {
+    x: { grid: { color: chartColors.gridColor, drawBorder: false }, ticks: { color: chartColors.inkLight, font: { family: 'Montserrat', size: 11 } } },
+    y: { grid: { color: chartColors.gridColor, drawBorder: false }, ticks: { color: chartColors.inkLight, font: { family: 'Montserrat', size: 11 } } }
+};
+
+Chart.defaults.font.family = 'Montserrat, Noto Sans SC, sans-serif';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.legend.labels.color = chartColors.inkLight;
+
+let chartInstances = {};
+
+function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
+
+// ============================
+// HOME CHARTS
+// ============================
+function initHomeCharts() {
+    // Trend Chart
+    destroyChart('trendChart');
+    const trendCtx = document.getElementById('trendChart');
+    if (!trendCtx) return;
+    chartInstances['trendChart'] = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+            datasets: [{
+                label: '入库数量',
+                data: [32, 28, 45, 38, 52, 41, 55, 48, 62, 58, 47, 53],
+                borderColor: chartColors.gold,
+                backgroundColor: chartColors.goldBg,
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: chartColors.gold,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: defaultScales, interaction: { intersect: false, mode: 'index' } }
+    });
+
+    // Category Chart
+    destroyChart('categoryChart');
+    const catCtx = document.getElementById('categoryChart');
+    chartInstances['categoryChart'] = new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['簪钗', '步摇', '耳饰', '项链', '手镯', '佩饰', '凤冠'],
+            datasets: [{
+                data: [320, 215, 198, 156, 142, 168, 85],
+                backgroundColor: [chartColors.gold, chartColors.wine, chartColors.goldLight, chartColors.green, chartColors.blue, chartColors.amber, chartColors.wineLight],
+                borderWidth: 0,
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } }
+        }
+    });
+
+    // Era Chart
+    destroyChart('eraChart');
+    const eraCtx = document.getElementById('eraChart');
+    chartInstances['eraChart'] = new Chart(eraCtx, {
+        type: 'bar',
+        data: {
+            labels: ['唐代', '宋代', '元代', '明代', '清代', '近代'],
+            datasets: [{
+                label: '藏品数',
+                data: [86, 178, 52, 312, 485, 171],
+                backgroundColor: [
+                    'rgba(196,135,46,0.7)', 'rgba(139,34,64,0.7)', 'rgba(91,106,191,0.7)',
+                    'rgba(74,124,89,0.7)', 'rgba(184,134,11,0.7)', 'rgba(160,107,30,0.7)'
+                ],
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { ...defaultScales, y: { ...defaultScales.y, beginAtZero: true } } }
+    });
+}
+
+// ============================
+// ANALYTICS CHARTS
+// ============================
+function initAnalyticsCharts() {
+    // Material Value Chart
+    destroyChart('materialValueChart');
+    const mvCtx = document.getElementById('materialValueChart');
+    if (!mvCtx) return;
+    chartInstances['materialValueChart'] = new Chart(mvCtx, {
+        type: 'bar',
+        data: {
+            labels: ['翡翠', '白玉', '黄金', '珍珠', '玛瑙', '琥珀', '珊瑚', '白银'],
+            datasets: [
+                { label: '平均估值 (万)', data: [28, 22, 18, 12, 8, 15, 20, 6], backgroundColor: 'rgba(196,135,46,0.75)', borderRadius: 6, borderSkipped: false },
+                { label: '最高估值 (万)', data: [280, 160, 85, 45, 32, 68, 95, 28], backgroundColor: 'rgba(139,34,64,0.55)', borderRadius: 6, borderSkipped: false }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { ...defaultScales, y: { ...defaultScales.y, beginAtZero: true } }, barPercentage: 0.6 }
+    });
+
+    // Heatmap (simulated with matrix-like bar chart)
+    destroyChart('heatmapChart');
+    const hmCtx = document.getElementById('heatmapChart');
+    const eras = ['唐', '宋', '元', '明', '清', '近代'];
+    const cats = ['簪钗', '步摇', '耳饰', '项链', '手镯', '佩饰'];
+    const hmData = [
+        [12, 8, 5, 18, 45, 15], [8, 15, 3, 22, 38, 12], [10, 6, 4, 14, 28, 8],
+        [6, 12, 8, 20, 32, 18], [15, 10, 6, 28, 42, 14], [8, 18, 5, 25, 35, 10]
+    ];
+    const hmDatasets = cats.map((cat, ci) => ({
+        label: cat,
+        data: hmData[ci],
+        backgroundColor: [chartColors.gold, chartColors.wine, chartColors.goldLight, chartColors.green, chartColors.blue, chartColors.amber][ci] + 'AA',
+        borderRadius: 4, borderSkipped: false,
+    }));
+    chartInstances['heatmapChart'] = new Chart(hmCtx, {
+        type: 'bar',
+        data: { labels: eras, datasets: hmDatasets },
+        options: { responsive: true, maintainAspectRatio: false, scales: { ...defaultScales, x: { ...defaultScales.x, stacked: true }, y: { ...defaultScales.y, stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } }
+    });
+
+    // Condition Chart
+    destroyChart('conditionChart');
+    const condCtx = document.getElementById('conditionChart');
+    chartInstances['conditionChart'] = new Chart(condCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['完好', '良好', '一般', '需修复'],
+            datasets: [{ data: [420, 510, 248, 106], backgroundColor: ['#4A7C59', chartColors.gold, chartColors.amber, chartColors.wine], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Source Chart
+    destroyChart('sourceChart');
+    const srcCtx = document.getElementById('sourceChart');
+    chartInstances['sourceChart'] = new Chart(srcCtx, {
+        type: 'polarArea',
+        data: {
+            labels: ['拍卖行', '私人转让', '古董市场', '海外回流', '传承'],
+            datasets: [{ data: [380, 310, 265, 185, 144], backgroundColor: ['rgba(196,135,46,0.7)', 'rgba(139,34,64,0.6)', 'rgba(74,124,89,0.6)', 'rgba(91,106,191,0.6)', 'rgba(184,134,11,0.6)'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+    });
+
+    // Value Trend
+    destroyChart('valueTrendChart');
+    const vtCtx = document.getElementById('valueTrendChart');
+    chartInstances['valueTrendChart'] = new Chart(vtCtx, {
+        type: 'line',
+        data: {
+            labels: ['3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月'],
+            datasets: [{
+                label: '总估值 (百万)',
+                data: [6.2, 6.5, 6.8, 7.0, 7.3, 7.5, 7.8, 8.0, 8.2, 8.3, 8.5, 8.6],
+                borderColor: chartColors.gold, backgroundColor: chartColors.goldBg,
+                fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
+                pointBackgroundColor: '#fff', pointBorderColor: chartColors.gold, pointBorderWidth: 2,
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: defaultScales }
+    });
+}
+
+// ============================
+// TABLE DATA
+// ============================
+function initTable() {
+    const items = [
+        { name: '清代翡翠镶金步摇', era: '清 · 乾隆', cat: '步摇', material: '翡翠/黄金', value: '¥125,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
+        { name: '明代白玉龙纹佩', era: '明 · 万历', cat: '佩饰', material: '白玉', value: '¥268,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
+        { name: '宋代金丝点翠凤冠', era: '宋 · 南宋', cat: '凤冠', material: '黄金/翠羽', value: '¥580,000', status: '需修复', statusColor: 'bg-accent-50 text-accent-600' },
+        { name: '唐代鎏金银簪', era: '唐 · 盛唐', cat: '簪钗', material: '白银/鎏金', value: '¥95,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
+        { name: '清代珊瑚朝珠', era: '清 · 嘉庆', cat: '项链', material: '珊瑚', value: '¥340,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
+        { name: '明代琥珀雕花簪', era: '明 · 嘉靖', cat: '簪钗', material: '琥珀', value: '¥88,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700' },
+        { name: '清代金镶珍珠耳坠', era: '清 · 道光', cat: '耳饰', material: '黄金/珍珠', value: '¥156,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
+        { name: '元代玛瑙手镯', era: '元 · 中期', cat: '手镯', material: '玛瑙', value: '¥72,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
+        { name: '清代翡翠扳指', era: '清 · 雍正', cat: '戒指', material: '翡翠', value: '¥420,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
+        { name: '宋代银鎏金发钗', era: '宋 · 北宋', cat: '簪钗', material: '白银/鎏金', value: '¥68,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700' },
+    ];
+
+    const tbody = document.getElementById('collectionTableBody');
+    tbody.innerHTML = items.map(item => `
+        <tr class="table-row border-b border-ivory-100/60">
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-100 to-ivory-200 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                    </div>
+                    <span class="font-medium text-ink-800">${item.name}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-ink-500">${item.era}</td>
+            <td class="px-6 py-4"><span class="tag bg-ivory-100 text-ink-600">${item.cat}</span></td>
+            <td class="px-6 py-4 text-ink-500">${item.material}</td>
+            <td class="px-6 py-4 font-medium text-ink-700">${item.value}</td>
+            <td class="px-6 py-4"><span class="tag ${item.statusColor}">${item.status}</span></td>
+            <td class="px-6 py-4 text-right">
+                <button class="text-ink-400 hover:text-primary-500 cursor-pointer p-1" title="查看详情">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
+                <button class="text-ink-400 hover:text-primary-500 cursor-pointer p-1 ml-1" title="编辑">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ============================
+// CORRELATION GRAPH (D3 Force)
+// ============================
+function initCorrelationGraph() {
+    const container = document.getElementById('correlationGraph');
+    container.innerHTML = '';
+    const width = container.clientWidth;
+    const height = 500;
+
+    const nodes = [
+        { id: '翡翠', group: 'material', r: 28 },
+        { id: '白玉', group: 'material', r: 22 },
+        { id: '黄金', group: 'material', r: 24 },
+        { id: '珍珠', group: 'material', r: 18 },
+        { id: '清代', group: 'era', r: 30 },
+        { id: '明代', group: 'era', r: 26 },
+        { id: '宋代', group: 'era', r: 20 },
+        { id: '唐代', group: 'era', r: 16 },
+        { id: '步摇', group: 'type', r: 20 },
+        { id: '簪钗', group: 'type', r: 22 },
+        { id: '佩饰', group: 'type', r: 18 },
+        { id: '凤冠', group: 'type', r: 14 },
+        { id: '镶嵌', group: 'craft', r: 20 },
+        { id: '鎏金', group: 'craft', r: 16 },
+        { id: '点翠', group: 'craft', r: 18 },
+    ];
+
+    const links = [
+        { source: '翡翠', target: '清代', value: 0.92 }, { source: '翡翠', target: '镶嵌', value: 0.85 },
+        { source: '翡翠', target: '步摇', value: 0.7 }, { source: '白玉', target: '明代', value: 0.78 },
+        { source: '白玉', target: '佩饰', value: 0.82 }, { source: '黄金', target: '点翠', value: 0.87 },
+        { source: '黄金', target: '凤冠', value: 0.75 }, { source: '黄金', target: '清代', value: 0.68 },
+        { source: '珍珠', target: '清代', value: 0.6 }, { source: '珍珠', target: '簪钗', value: 0.55 },
+        { source: '簪钗', target: '鎏金', value: 0.65 }, { source: '簪钗', target: '唐代', value: 0.58 },
+        { source: '步摇', target: '清代', value: 0.72 }, { source: '凤冠', target: '宋代', value: 0.7 },
+        { source: '点翠', target: '清代', value: 0.8 }, { source: '鎏金', target: '唐代', value: 0.75 },
+        { source: '镶嵌', target: '明代', value: 0.6 }, { source: '明代', target: '簪钗', value: 0.55 },
+    ];
+
+    const groupColors = { material: '#4A7C59', era: '#8B2240', type: '#B8860B', craft: '#5B6ABF' };
+
+    const svg = d3.select(container).append('svg').attr('width', width).attr('height', height);
+    const g = svg.append('g');
+
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(120).strength(d => d.value * 0.5))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(d => d.r + 8));
+
+    const link = g.append('g').selectAll('line').data(links).join('line')
+        .attr('stroke', chartColors.gold).attr('stroke-opacity', d => d.value * 0.5)
+        .attr('stroke-width', d => d.value * 3);
+
+    const node = g.append('g').selectAll('g').data(nodes).join('g')
+        .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended));
+
+    node.append('circle').attr('r', d => d.r).attr('fill', d => groupColors[d.group])
+        .attr('fill-opacity', 0.8).attr('stroke', '#fff').attr('stroke-width', 2).attr('class', 'node-circle');
+
+    node.append('text').text(d => d.id)
+        .attr('text-anchor', 'middle').attr('dy', '0.35em')
+        .attr('fill', '#fff').attr('font-size', d => Math.max(10, d.r * 0.45))
+        .attr('font-family', 'Noto Sans SC, sans-serif').attr('font-weight', 500)
+        .style('pointer-events', 'none');
+
+    const tooltip = document.getElementById('graphTooltip');
+    node.on('mouseover', (event, d) => {
+        const related = links.filter(l => l.source.id === d.id || l.target.id === d.id);
+        tooltip.innerHTML = `<strong>${d.id}</strong><br>关联数: ${related.length}`;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (event.pageX + 12) + 'px';
+        tooltip.style.top = (event.pageY - 10) + 'px';
+    }).on('mouseout', () => { tooltip.style.display = 'none'; });
+
+    simulation.on('tick', () => {
+        link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+    function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+    function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+}
+
+// ============================
+// KNOWLEDGE GRAPH (D3 Force - larger)
+// ============================
+function initKnowledgeGraph() {
+    const container = document.getElementById('knowledgeGraph');
+    container.innerHTML = '';
+    const width = container.clientWidth;
+    const height = 600;
+
+    const nodes = [
+        // Items (gold)
+        { id: '翡翠步摇', group: 'item', r: 16 }, { id: '白玉龙佩', group: 'item', r: 16 },
+        { id: '金丝凤冠', group: 'item', r: 16 }, { id: '鎏金银簪', group: 'item', r: 16 },
+        { id: '珊瑚朝珠', group: 'item', r: 16 }, { id: '琥珀雕簪', group: 'item', r: 16 },
+        { id: '珍珠耳坠', group: 'item', r: 16 }, { id: '玛瑙手镯', group: 'item', r: 16 },
+        { id: '翡翠扳指', group: 'item', r: 16 }, { id: '银鎏金钗', group: 'item', r: 16 },
+        // Eras (wine)
+        { id: '唐代', group: 'era', r: 22 }, { id: '宋代', group: 'era', r: 22 },
+        { id: '元代', group: 'era', r: 18 }, { id: '明代', group: 'era', r: 24 },
+        { id: '清代', group: 'era', r: 28 },
+        // Materials (green)
+        { id: '翡翠', group: 'material', r: 20 }, { id: '白玉', group: 'material', r: 18 },
+        { id: '黄金', group: 'material', r: 20 }, { id: '白银', group: 'material', r: 16 },
+        { id: '珍珠', group: 'material', r: 14 }, { id: '珊瑚', group: 'material', r: 14 },
+        { id: '琥珀', group: 'material', r: 12 }, { id: '玛瑙', group: 'material', r: 12 },
+        // Crafts (blue)
+        { id: '镶嵌工艺', group: 'craft', r: 18 }, { id: '鎏金工艺', group: 'craft', r: 16 },
+        { id: '点翠工艺', group: 'craft', r: 16 }, { id: '花丝工艺', group: 'craft', r: 14 },
+        { id: '雕刻工艺', group: 'craft', r: 14 },
+        // Types (amber)
+        { id: '簪钗类', group: 'type', r: 18 }, { id: '步摇类', group: 'type', r: 16 },
+        { id: '耳饰类', group: 'type', r: 14 }, { id: '佩饰类', group: 'type', r: 16 },
+        { id: '凤冠类', group: 'type', r: 14 }, { id: '手镯类', group: 'type', r: 12 },
+    ];
+
+    const links = [
+        // Item -> Era
+        { source: '翡翠步摇', target: '清代' }, { source: '白玉龙佩', target: '明代' },
+        { source: '金丝凤冠', target: '宋代' }, { source: '鎏金银簪', target: '唐代' },
+        { source: '珊瑚朝珠', target: '清代' }, { source: '琥珀雕簪', target: '明代' },
+        { source: '珍珠耳坠', target: '清代' }, { source: '玛瑙手镯', target: '元代' },
+        { source: '翡翠扳指', target: '清代' }, { source: '银鎏金钗', target: '宋代' },
+        // Item -> Material
+        { source: '翡翠步摇', target: '翡翠' }, { source: '翡翠步摇', target: '黄金' },
+        { source: '白玉龙佩', target: '白玉' }, { source: '金丝凤冠', target: '黄金' },
+        { source: '鎏金银簪', target: '白银' }, { source: '珊瑚朝珠', target: '珊瑚' },
+        { source: '琥珀雕簪', target: '琥珀' }, { source: '珍珠耳坠', target: '珍珠' },
+        { source: '珍珠耳坠', target: '黄金' }, { source: '玛瑙手镯', target: '玛瑙' },
+        { source: '翡翠扳指', target: '翡翠' }, { source: '银鎏金钗', target: '白银' },
+        // Item -> Craft
+        { source: '翡翠步摇', target: '镶嵌工艺' }, { source: '白玉龙佩', target: '雕刻工艺' },
+        { source: '金丝凤冠', target: '点翠工艺' }, { source: '金丝凤冠', target: '花丝工艺' },
+        { source: '鎏金银簪', target: '鎏金工艺' }, { source: '琥珀雕簪', target: '雕刻工艺' },
+        { source: '珍珠耳坠', target: '镶嵌工艺' }, { source: '翡翠扳指', target: '雕刻工艺' },
+        { source: '银鎏金钗', target: '鎏金工艺' },
+        // Item -> Type
+        { source: '翡翠步摇', target: '步摇类' }, { source: '白玉龙佩', target: '佩饰类' },
+        { source: '金丝凤冠', target: '凤冠类' }, { source: '鎏金银簪', target: '簪钗类' },
+        { source: '珊瑚朝珠', target: '佩饰类' }, { source: '琥珀雕簪', target: '簪钗类' },
+        { source: '珍珠耳坠', target: '耳饰类' }, { source: '玛瑙手镯', target: '手镯类' },
+        { source: '翡翠扳指', target: '佩饰类' }, { source: '银鎏金钗', target: '簪钗类' },
+        // Cross-links (Material -> Craft associations)
+        { source: '翡翠', target: '镶嵌工艺' }, { source: '黄金', target: '花丝工艺' },
+        { source: '黄金', target: '点翠工艺' }, { source: '白银', target: '鎏金工艺' },
+    ];
+
+    const groupColors = {
+        item: '#C4872E', era: '#8B2240', material: '#4A7C59', craft: '#5B6ABF', type: '#B8860B'
+    };
+
+    const svg = d3.select(container).append('svg')
+        .attr('width', width).attr('height', height)
+        .attr('viewBox', [0, 0, width, height]);
+
+    const g = svg.append('g');
+
+    // Zoom
+    let currentZoom = d3.zoomIdentity;
+    const zoom = d3.zoom().scaleExtent([0.3, 3]).on('zoom', e => { g.attr('transform', e.transform); currentZoom = e.transform; });
+    svg.call(zoom);
+
+    document.getElementById('zoomIn').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+    document.getElementById('zoomOut').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 0.75);
+    document.getElementById('resetGraph').onclick = () => svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-200))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(d => d.r + 5));
+
+    const link = g.append('g').selectAll('line').data(links).join('line')
+        .attr('stroke', '#C4872E').attr('stroke-opacity', 0.15).attr('stroke-width', 1.2);
+
+    const node = g.append('g').selectAll('g').data(nodes).join('g')
+        .call(d3.drag().on('start', ds).on('drag', dd).on('end', de));
+
+    node.append('circle').attr('r', d => d.r).attr('fill', d => groupColors[d.group])
+        .attr('fill-opacity', 0.85).attr('stroke', '#fff').attr('stroke-width', 1.5).attr('class', 'node-circle');
+
+    node.append('text').text(d => d.id)
+        .attr('text-anchor', 'middle').attr('dy', '0.35em')
+        .attr('fill', '#fff').attr('font-size', d => Math.max(8, d.r * 0.55))
+        .attr('font-family', 'Noto Sans SC, sans-serif').attr('font-weight', 500)
+        .style('pointer-events', 'none');
+
+    const tooltip = document.getElementById('graphTooltip');
+    node.on('mouseover', (event, d) => {
+        // Highlight connected
+        const connected = new Set();
+        links.forEach(l => {
+            if (l.source.id === d.id) connected.add(l.target.id);
+            if (l.target.id === d.id) connected.add(l.source.id);
+        });
+        node.select('circle').attr('fill-opacity', n => n.id === d.id || connected.has(n.id) ? 1 : 0.2);
+        link.attr('stroke-opacity', l => l.source.id === d.id || l.target.id === d.id ? 0.6 : 0.05);
+
+        const groupLabels = { item: '藏品', era: '年代', material: '材质', craft: '工艺', type: '品类' };
+        tooltip.innerHTML = `<strong>${d.id}</strong><br>类型: ${groupLabels[d.group]}<br>关联: ${connected.size} 项`;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (event.pageX + 12) + 'px';
+        tooltip.style.top = (event.pageY - 10) + 'px';
+    }).on('mousemove', (event) => {
+        tooltip.style.left = (event.pageX + 12) + 'px';
+        tooltip.style.top = (event.pageY - 10) + 'px';
+    }).on('mouseout', () => {
+        node.select('circle').attr('fill-opacity', 0.85);
+        link.attr('stroke-opacity', 0.15);
+        tooltip.style.display = 'none';
+    });
+
+    simulation.on('tick', () => {
+        link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    function ds(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+    function dd(event, d) { d.fx = event.x; d.fy = event.y; }
+    function de(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+}
+
+// ============================
+// INIT
+// ============================
+window.addEventListener('DOMContentLoaded', () => {
+    initHomeCharts();
+    initTable();
+});
+
+// Handle resize for graphs
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const activePage = document.querySelector('.page.active');
+        if (activePage) {
+            const id = activePage.id.replace('page-', '');
+            if (id === 'correlation') initCorrelationGraph();
+            if (id === 'knowledge') initKnowledgeGraph();
+        }
+    }, 250);
+});
+</script>
+</body>
+</html>
