@@ -9,7 +9,10 @@
       "mcp__chrome-devtools__navigate_page",
       "mcp__chrome-devtools__take_screenshot",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(dir /s /b C:Users11421zhonggu)",
+      "Bash(dir:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

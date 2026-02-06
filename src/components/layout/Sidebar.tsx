@@ -4,7 +4,14 @@ interface SidebarProps {
   isOpen: boolean
 }
 
-const navItems = [
+interface NavItem {
+  page: string
+  label: string
+  icon: JSX.Element
+  group?: string
+}
+
+const navItems: NavItem[] = [
   {
     page: 'home',
     label: '首页概览',
@@ -59,6 +66,38 @@ const navItems = [
       </svg>
     ),
   },
+  // 基础数据管理
+  {
+    page: 'era-manage',
+    label: '年代管理',
+    group: '基础数据',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
+    page: 'category-manage',
+    label: '品类管理',
+    group: '基础数据',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 6h.008v.008H6V6z" />
+      </svg>
+    ),
+  },
+  {
+    page: 'material-manage',
+    label: '材质管理',
+    group: '基础数据',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      </svg>
+    ),
+  },
 ]
 
 export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProps) {
@@ -85,22 +124,30 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <a
-            key={item.page}
-            href="#"
-            onClick={(e) => {
-              e.preventDefault()
-              onNavigate(item.page)
-            }}
-            className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer ${
-              currentPage === item.page ? 'active' : 'text-ink-500'
-            }`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </a>
-        ))}
+        {navItems.map((item, idx) => {
+          const prevItem = idx > 0 ? navItems[idx - 1] : null
+          const showGroupLabel = item.group && item.group !== prevItem?.group
+          return (
+            <div key={item.page}>
+              {showGroupLabel && (
+                <p className="text-[10px] uppercase tracking-wider text-ink-300 font-medium px-4 pt-4 pb-1">{item.group}</p>
+              )}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate(item.page)
+                }}
+                className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer ${
+                  currentPage === item.page ? 'active' : 'text-ink-500'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </a>
+            </div>
+          )
+        })}
       </nav>
 
       {/* User */}

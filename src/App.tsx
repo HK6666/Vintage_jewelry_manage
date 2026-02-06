@@ -8,6 +8,9 @@ import EntryPage from './pages/EntryPage'
 import ListPage from './pages/ListPage'
 import CorrelationPage from './pages/CorrelationPage'
 import KnowledgePage from './pages/KnowledgePage'
+import EraManagePage from './pages/EraManagePage'
+import CategoryManagePage from './pages/CategoryManagePage'
+import MaterialManagePage from './pages/MaterialManagePage'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -49,6 +52,9 @@ export default function App() {
             <Route path="/list" element={<ListPage onNavigate={handleNavigate} />} />
             <Route path="/correlation" element={<CorrelationPage />} />
             <Route path="/knowledge" element={<KnowledgePage />} />
+            <Route path="/era-manage" element={<EraManagePage />} />
+            <Route path="/category-manage" element={<CategoryManagePage />} />
+            <Route path="/material-manage" element={<MaterialManagePage />} />
           </Routes>
         </div>
       </main>
