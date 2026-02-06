@@ -15,7 +15,7 @@ export default function MobileHeader({ onMenuToggle }: MobileHeaderProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        <span className="font-heading text-lg font-semibold text-ink-800">珍藏阁</span>
+        <span className="font-heading text-lg font-semibold text-ink-800">Vintage Vault</span>
         <div className="w-9" />
       </div>
     </header>

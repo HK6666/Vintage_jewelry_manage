@@ -116,8 +116,8 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
             </svg>
           </div>
           <div>
-            <h1 className="font-heading text-xl font-bold text-ink-800 tracking-wide">珍藏阁</h1>
-            <p className="text-xs text-ink-400 font-body">欧美中古首饰管理平台</p>
+            <h1 className="font-heading text-xl font-bold text-ink-800 tracking-wide">Vintage Vault</h1>
+            <p className="text-xs text-ink-400 font-body">Jewelry Collection Manager</p>
           </div>
         </div>
       </div>
@@ -154,11 +154,10 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
       <div className="px-4 py-4 border-t border-ivory-200/60">
         <div className="flex items-center gap-3 px-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-300 to-accent-400 flex items-center justify-center">
-            <span className="text-white text-sm font-semibold">鉴</span>
+            <span className="text-white text-sm font-semibold">U</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-ink-700 truncate">鉴赏师</p>
-            <p className="text-xs text-ink-400 truncate">高级管理员</p>
+            <p className="text-sm font-medium text-ink-700 truncate">User</p>
           </div>
         </div>
       </div>
