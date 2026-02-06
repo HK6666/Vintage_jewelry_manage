@@ -1,15 +1,15 @@
-# 珍藏阁 - 西洋古董珠宝管理系统
+# Vintage Jewelry Manage
 
-一个基于 React + TypeScript + Vite 构建的西洋古董珠宝收藏管理平台。
+A React-based Western vintage jewelry collection management system for antique dealers and collectors.
 
-## 功能特性
+## Features
 
-- 📊 **数据概览** - 藏品统计、入库趋势、品类分布
-- 📈 **图表分析** - 多维度数据可视化展示
-- ➕ **藏品录入** - 多步骤表单添加新藏品
-- 📋 **藏品列表** - 分类筛选、详细展示
-- 🔗 **关联图谱** - D3 力导向图展示藏品关联
-- 🧠 **知识图谱** - 年代、品牌、风格等知识网络
+- 📊 **Dashboard** - Collection statistics, inventory trends, and category distribution
+- 📈 **Analytics** - Multi-dimensional data visualization with Chart.js
+- ➕ **Add Items** - Multi-step form for adding new jewelry pieces
+- 📋 **Collection List** - Category filtering and detailed item display
+- 🔗 **Correlation Graph** - D3 force-directed graph showing item relationships
+- 🧠 **Knowledge Graph** - Interactive network of eras, brands, and styles
 
 ## 技术栈
 
@@ -20,31 +20,31 @@
 - **图谱**: D3.js
 - **路由**: react-router-dom v6
 
-## 开发
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 构建
+## Build
 
 ```bash
 npm run build
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 src/
   ├── components/
-  │   ├── charts/        # Chart.js 图表组件
-  │   ├── graphs/        # D3 图谱组件
-  │   ├── layout/        # 布局组件
-  │   └── ui/            # UI 组件
-  ├── data/              # 静态数据
-  ├── pages/             # 页面组件
-  └── index.css          # 全局样式
+  │   ├── charts/        # Chart.js components
+  │   ├── graphs/        # D3 graph components
+  │   ├── layout/        # Layout components
+  │   └── ui/            # UI components
+  ├── data/              # Static mock data
+  ├── pages/             # Page components
+  └── index.css          # Global styles
 ```
 
 ## License
