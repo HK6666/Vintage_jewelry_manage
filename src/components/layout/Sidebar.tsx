@@ -110,9 +110,26 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
       {/* Logo */}
       <div className="px-6 py-6 border-b border-ivory-200/60">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+              <defs>
+                <radialGradient id="opal-glow" cx="40%" cy="35%" r="60%">
+                  <stop offset="0%" stopColor="#a8edea" />
+                  <stop offset="30%" stopColor="#7ec8e3" />
+                  <stop offset="55%" stopColor="#c3aed6" />
+                  <stop offset="80%" stopColor="#e8a87c" />
+                  <stop offset="100%" stopColor="#d4a5a5" />
+                </radialGradient>
+                <radialGradient id="opal-highlight" cx="35%" cy="30%" r="35%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.7)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </radialGradient>
+              </defs>
+              <ellipse cx="12" cy="12" rx="8" ry="9.5" fill="url(#opal-glow)" />
+              <ellipse cx="12" cy="12" rx="8" ry="9.5" fill="url(#opal-highlight)" />
+              <ellipse cx="12" cy="12" rx="8" ry="9.5" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+              <ellipse cx="10" cy="9" rx="3" ry="2" fill="rgba(168,237,234,0.3)" />
+              <ellipse cx="14" cy="14" rx="2.5" ry="1.5" fill="rgba(195,174,214,0.25)" />
             </svg>
           </div>
           <div>
@@ -153,9 +170,11 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
       {/* User */}
       <div className="px-4 py-4 border-t border-ivory-200/60">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-300 to-accent-400 flex items-center justify-center">
-            <span className="text-white text-sm font-semibold">U</span>
-          </div>
+          <img
+            src="https://api.dicebear.com/9.x/glass/svg?seed=Vintage&backgroundColor=b6e3f4,c0aede,d1d4f9"
+            alt="User avatar"
+            className="w-9 h-9 rounded-full flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-ink-700 truncate">User</p>
           </div>
