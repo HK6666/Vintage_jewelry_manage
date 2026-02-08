@@ -119,9 +119,16 @@ export default function EntryPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-ink-600 mb-2">估值 (¥)</label>
-                <input type="number" placeholder="输入估值金额" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+                <label className="block text-sm font-medium text-ink-600 mb-2">购入价格 (¥)</label>
+                <input type="number" placeholder="输入购入价格（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-600 mb-2">预估价值 (¥)</label>
+                <input type="number" placeholder="输入预估价值（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">保存状态</label>
                 <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>

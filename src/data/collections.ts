@@ -1,24 +1,30 @@
 export interface CollectionItem {
+  id: number
   name: string
   era: string
   cat: string
   material: string
-  value: string
+  purchasePrice: string
+  estimatedValue: string
   status: string
   statusColor: string
+  description: string
+  source: string
+  date: string
+  tags: string[]
 }
 
 export const collectionItems: CollectionItem[] = [
-  { name: 'Cartier Art Deco 钻石胸针', era: 'Art Deco · 1925', cat: '胸针', material: '铂金/钻石', value: '$185,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
-  { name: 'Tiffany 维多利亚蓝宝石项链', era: 'Victorian · 1880', cat: '项链', material: '黄金/蓝宝石', value: '$320,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
-  { name: 'Lalique 新艺术珐琅蜻蜓胸针', era: 'Art Nouveau · 1900', cat: '胸针', material: '黄金/珐琅/蛋白石', value: '$680,000', status: '需修复', statusColor: 'bg-accent-50 text-accent-600' },
-  { name: 'Bulgari Serpenti 祖母绿手链', era: 'Retro · 1965', cat: '手链', material: '黄金/祖母绿', value: '$125,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
-  { name: 'Van Cleef & Arpels 红宝石套件', era: 'Retro · 1945', cat: '项链', material: '黄金/红宝石', value: '$450,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
-  { name: '爱德华时期珍珠流苏耳坠', era: 'Edwardian · 1905', cat: '耳饰', material: '铂金/珍珠', value: '$92,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700' },
-  { name: 'Chaumet 钻石冠冕', era: 'Belle Époque · 1910', cat: '冠冕', material: '铂金/钻石', value: '$1,200,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
-  { name: 'Georg Jensen 银质花丝手镯', era: 'Mid-Century · 1955', cat: '手链', material: '纯银', value: '$38,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600' },
-  { name: 'Boucheron 蓝宝石鸡尾酒戒指', era: 'Art Deco · 1930', cat: '戒指', material: '铂金/蓝宝石', value: '$275,000', status: '完好', statusColor: 'bg-green-50 text-green-700' },
-  { name: 'Victorian 浮雕贝壳胸针', era: 'Victorian · 1860', cat: '胸针', material: '黄金/贝壳', value: '$28,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700' },
+  { id: 1, name: 'Cartier Art Deco 钻石胸针', era: 'Art Deco · 1925', cat: '胸针', material: '铂金/钻石', purchasePrice: '¥1,200,000', estimatedValue: '¥1,350,000', status: '完好', statusColor: 'bg-green-50 text-green-700', description: '这枚 Cartier 胸针创作于 1925 年巴黎，采用铂金底座，镶嵌约 12 克拉老矿式切割钻石。设计以典型 Art Deco 几何图案为基础，展现了该时期对称与线条美学的巅峰。胸针背面刻有 Cartier Paris 及编号，保存极为完好。', source: "Christie's 纽约拍卖", date: '2023-06-15', tags: ['宫廷', '镶嵌', 'Art Deco'] },
+  { id: 2, name: 'Tiffany 维多利亚蓝宝石项链', era: 'Victorian · 1880', cat: '项链', material: '黄金/蓝宝石', purchasePrice: '¥2,100,000', estimatedValue: '¥2,340,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600', description: 'Tiffany & Co. 维多利亚时期杰作，18K 黄金链身搭配一颗约 8.5 克拉锡兰蓝宝石主石，周围环绕种子珍珠。链扣处刻有 Tiffany & Co. 标识，展现了维多利亚晚期审美风格。', source: "Sotheby's 伦敦拍卖", date: '2022-11-20', tags: ['品牌', '蓝宝石', 'Victorian'] },
+  { id: 3, name: 'Lalique 新艺术珐琅蜻蜓胸针', era: 'Art Nouveau · 1900', cat: '胸针', material: '黄金/珐琅/蛋白石', purchasePrice: '¥4,500,000', estimatedValue: '¥4,960,000', status: '需修复', statusColor: 'bg-accent-50 text-accent-600', description: 'René Lalique 大师亲制蜻蜓胸针，约 1900 年作品。采用 plique-à-jour 透光珐琅工艺制作蜻蜓翅膀，腹部镶嵌一颗火彩绚丽的澳大利亚蛋白石。珐琅部分有轻微裂纹，需专业修复。', source: '私人藏家转让', date: '2024-01-08', tags: ['珐琅', '大师作品', 'Art Nouveau'] },
+  { id: 4, name: 'Bulgari Serpenti 祖母绿手链', era: 'Retro · 1965', cat: '手链', material: '黄金/祖母绿', purchasePrice: '¥820,000', estimatedValue: '¥912,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600', description: 'Bulgari 经典 Serpenti 蛇形手链，18K 黄金鳞片状链节，蛇头镶嵌一对梨形哥伦比亚祖母绿作为眼睛。典型的 1960 年代意大利珠宝风格，大胆而奢华。', source: '古董商购入', date: '2023-09-03', tags: ['品牌', 'Serpenti', 'Retro'] },
+  { id: 5, name: 'Van Cleef & Arpels 红宝石套件', era: 'Retro · 1945', cat: '项链', material: '黄金/红宝石', purchasePrice: '¥3,000,000', estimatedValue: '¥3,285,000', status: '完好', statusColor: 'bg-green-50 text-green-700', description: 'Van Cleef & Arpels 1945 年 Retro 风格套件，包含项链与配套耳夹。18K 玫瑰金机械感设计，镶嵌缅甸红宝石约 15 克拉（无烧），展现了战后好莱坞黄金时代的奢华风格。', source: '遗产拍卖', date: '2022-05-12', tags: ['套件', '红宝石', '无烧'] },
+  { id: 6, name: '爱德华时期珍珠流苏耳坠', era: 'Edwardian · 1905', cat: '耳饰', material: '铂金/珍珠', purchasePrice: '¥600,000', estimatedValue: '¥671,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700', description: '爱德华时期铂金耳坠，采用花环风格设计，铂金蕾丝般的镂空框架悬挂天然海水珍珠流苏。珍珠光泽略有暗淡，铂金框架有使用痕迹，整体保持时代特征。', source: '线上平台', date: '2024-03-22', tags: ['铂金', '珍珠', 'Edwardian'] },
+  { id: 7, name: 'Chaumet 钻石冠冕', era: 'Belle Époque · 1910', cat: '冠冕', material: '铂金/钻石', purchasePrice: '¥8,000,000', estimatedValue: '¥8,760,000', status: '完好', statusColor: 'bg-green-50 text-green-700', description: 'Chaumet 为法国贵族定制的钻石冠冕，约 1910 年作品。铂金底座镶嵌超过 200 颗老欧式切割钻石，总重约 45 克拉。冠冕可拆解为项链佩戴，展现了 Belle Époque 时期的极致工艺。', source: "Christie's 日内瓦", date: '2021-11-08', tags: ['宫廷', '冠冕', '定制'] },
+  { id: 8, name: 'Georg Jensen 银质花丝手镯', era: 'Mid-Century · 1955', cat: '手链', material: '纯银', purchasePrice: '¥250,000', estimatedValue: '¥277,000', status: '良好', statusColor: 'bg-primary-50 text-primary-600', description: 'Georg Jensen 925 纯银手镯，编号 #287，由 Henning Koppel 设计。流线型抽象造型体现了北欧中世纪现代设计美学，手工打磨的银面呈现柔和的缎面光泽。', source: '古董商购入', date: '2023-12-01', tags: ['北欧', '极简', '设计师'] },
+  { id: 9, name: 'Boucheron 蓝宝石鸡尾酒戒指', era: 'Art Deco · 1930', cat: '戒指', material: '铂金/蓝宝石', purchasePrice: '¥1,800,000', estimatedValue: '¥2,007,000', status: '完好', statusColor: 'bg-green-50 text-green-700', description: 'Boucheron 1930 年代鸡尾酒戒指，铂金底座中央镶嵌一颗约 6 克拉克什米尔蓝宝石（枕形切割），两侧以阶梯切割钻石衬托。典型的 Art Deco 几何对称设计。', source: "Sotheby's 香港", date: '2023-04-18', tags: ['品牌', '克什米尔', 'Art Deco'] },
+  { id: 10, name: 'Victorian 浮雕贝壳胸针', era: 'Victorian · 1860', cat: '胸针', material: '黄金/贝壳', purchasePrice: '¥180,000', estimatedValue: '¥204,000', status: '一般', statusColor: 'bg-yellow-50 text-yellow-700', description: '维多利亚中期浮雕贝壳胸针，黄金框架内嵌手工雕刻的贝壳浮雕，描绘希腊女神侧像。贝壳表面有轻微磨损，黄金框架保持原始的罗马回纹装饰。', source: '遗产拍卖', date: '2024-02-14', tags: ['浮雕', '古典', 'Victorian'] },
 ]
 
 export const recentItems = [
