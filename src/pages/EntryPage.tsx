@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import { defaultBrands, defaultColors, defaultEras } from '../data/collections'
 
 const selectArrowBg = "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]"
 
@@ -72,13 +73,9 @@ export default function EntryPage() {
                 </label>
                 <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择年代</option>
-                  <option>Georgian (1714-1837)</option>
-                  <option>Victorian (1837-1901)</option>
-                  <option>Art Nouveau (1890-1910)</option>
-                  <option>Edwardian (1901-1915)</option>
-                  <option>Art Deco (1920-1935)</option>
-                  <option>Retro (1935-1950)</option>
-                  <option>Mid-Century (1950-1970)</option>
+                  {defaultEras.map(era => (
+                    <option key={era.id} value={era.nameEn}>{era.name} ({era.period})</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -113,6 +110,27 @@ export default function EntryPage() {
                   <option>蛋白石</option>
                   <option>珐琅</option>
                   <option>其他</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-ink-600 mb-2">品牌</label>
+                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <option value="">请选择品牌</option>
+                  {defaultBrands.map(brand => (
+                    <option key={brand.id} value={brand.nameEn}>{brand.name} ({brand.nameEn})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-600 mb-2">色系</label>
+                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <option value="">请选择色系</option>
+                  {defaultColors.map(color => (
+                    <option key={color.id} value={color.name}>{color.name} ({color.nameEn})</option>
+                  ))}
                 </select>
               </div>
             </div>

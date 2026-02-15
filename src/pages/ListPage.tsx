@@ -66,6 +66,8 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">年代</th>
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">品类</th>
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">材质</th>
+                  <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">品牌</th>
+                  <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">色系</th>
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">购入价格</th>
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">预估价值</th>
                   <th className="text-left px-6 py-4 text-ink-400 font-medium text-xs uppercase tracking-wider">状态</th>
@@ -90,6 +92,10 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                       <span className="tag bg-ivory-100 text-ink-600">{item.cat}</span>
                     </td>
                     <td className="px-6 py-4 text-ink-500">{item.material}</td>
+                    <td className="px-6 py-4 text-ink-500">{item.brand || '—'}</td>
+                    <td className="px-6 py-4">
+                      {item.colorScheme ? <span className="tag bg-ivory-100 text-ink-600">{item.colorScheme}</span> : '—'}
+                    </td>
                     <td className="px-6 py-4 font-medium text-ink-700">{item.purchasePrice}</td>
                     <td className="px-6 py-4 font-medium text-ink-700">{item.estimatedValue}</td>
                     <td className="px-6 py-4">

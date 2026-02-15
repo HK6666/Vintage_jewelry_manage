@@ -11,6 +11,8 @@ import KnowledgePage from './pages/KnowledgePage'
 import EraManagePage from './pages/EraManagePage'
 import CategoryManagePage from './pages/CategoryManagePage'
 import MaterialManagePage from './pages/MaterialManagePage'
+import BrandManagePage from './pages/BrandManagePage'
+import ColorManagePage from './pages/ColorManagePage'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -55,6 +57,8 @@ export default function App() {
             <Route path="/era-manage" element={<EraManagePage />} />
             <Route path="/category-manage" element={<CategoryManagePage />} />
             <Route path="/material-manage" element={<MaterialManagePage />} />
+            <Route path="/brand-manage" element={<BrandManagePage />} />
+            <Route path="/color-manage" element={<ColorManagePage />} />
           </Routes>
         </div>
       </main>
