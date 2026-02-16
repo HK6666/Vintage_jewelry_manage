@@ -4,7 +4,7 @@ services:
     restart: always
     env_file: ./backend/.env
     volumes:
-      - db_data:/app
+      - backend_data:/app/data
     expose:
       - "5000"
 
@@ -20,4 +20,4 @@ services:
       - backend
 
 volumes:
-  db_data:
+  backend_data:
