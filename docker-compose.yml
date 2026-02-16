@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    restart: always
+    env_file: ./backend/.env
+    volumes:
+      - db_data:/app
+    expose:
+      - "5000"
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
