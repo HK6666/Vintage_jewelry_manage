@@ -12,7 +12,7 @@ services:
     image: nginx:alpine
     restart: always
     ports:
-      - "8080:80"
+      - "9527:80"
     volumes:
       - ./dist:/usr/share/nginx/html:ro
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
