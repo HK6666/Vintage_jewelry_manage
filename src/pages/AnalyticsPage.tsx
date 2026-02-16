@@ -1,19 +1,24 @@
 import { Bar, Doughnut, PolarArea, Line } from 'react-chartjs-2'
 import { chartColors, defaultScales } from '../data/chartConfig'
+import { useFetch } from '../api/hooks'
+import { analyticsApi } from '../api/services'
 import GlassCard from '../components/ui/GlassCard'
 import ChartWrapper from '../components/charts/ChartWrapper'
 
+function formatValue(val: number): string {
+  if (val >= 1_000_000) return `¥${(val / 1_000_000).toFixed(1)}M`
+  if (val >= 1_000) return `¥${(val / 1_000).toFixed(0)}K`
+  return `¥${val}`
+}
+
 export default function AnalyticsPage() {
-  const eras = ['Victorian', 'Art Nouveau', 'Edwardian', 'Art Deco', 'Retro', 'Mid-Century']
-  const cats = ['戒指', '项链', '手链', '胸针', '耳饰', '吊坠']
-  const hmData = [
-    [12, 8, 5, 18, 45, 15],
-    [8, 15, 3, 22, 38, 12],
-    [10, 6, 4, 14, 28, 8],
-    [6, 12, 8, 20, 32, 18],
-    [15, 10, 6, 28, 42, 14],
-    [8, 18, 5, 25, 35, 10],
-  ]
+  const { data: summary } = useFetch(() => analyticsApi.getSummary())
+  const { data: valueMat } = useFetch(() => analyticsApi.getValueByMaterial())
+  const { data: heatmap } = useFetch(() => analyticsApi.getEraCategoryHeatmap())
+  const { data: statusDist } = useFetch(() => analyticsApi.getStatusDistribution())
+  const { data: sourceDist } = useFetch(() => analyticsApi.getSourceDistribution())
+  const { data: valueTrend } = useFetch(() => analyticsApi.getValueTrend(12))
+
   const hmColors = [chartColors.gold, chartColors.wine, chartColors.goldLight, chartColors.green, chartColors.blue, chartColors.amber]
 
   return (
@@ -27,19 +32,19 @@ export default function AnalyticsPage() {
       <div className="px-6 md:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="stat-card rounded-2xl p-4 text-center">
           <p className="text-sm text-ink-400">平均估值</p>
-          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">$67K</p>
+          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">{summary ? formatValue(summary.avgValue) : '—'}</p>
         </div>
         <div className="stat-card rounded-2xl p-4 text-center">
           <p className="text-sm text-ink-400">最高估值</p>
-          <p className="text-2xl font-bold text-accent-500 font-heading mt-1">$2.8M</p>
+          <p className="text-2xl font-bold text-accent-500 font-heading mt-1">{summary ? formatValue(summary.maxValue) : '—'}</p>
         </div>
         <div className="stat-card rounded-2xl p-4 text-center">
           <p className="text-sm text-ink-400">材质种类</p>
-          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">28</p>
+          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">{summary?.materialTypeCount ?? '—'}</p>
         </div>
         <div className="stat-card rounded-2xl p-4 text-center">
           <p className="text-sm text-ink-400">品牌覆盖</p>
-          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">24</p>
+          <p className="text-2xl font-bold text-ink-800 font-heading mt-1">{summary?.brandCount ?? '—'}</p>
         </div>
       </div>
 
@@ -50,19 +55,19 @@ export default function AnalyticsPage() {
           <ChartWrapper height={280}>
             <Bar
               data={{
-                labels: ['钻石', '红宝石', '蓝宝石', '祖母绿', '珍珠', '黄金', '铂金', '纯银'],
+                labels: valueMat?.map(v => v.material) || [],
                 datasets: [
                   {
-                    label: '平均估值 (千$)',
-                    data: [85, 62, 48, 55, 18, 32, 45, 8],
+                    label: '平均估值 (¥)',
+                    data: valueMat?.map(v => v.avgValue) || [],
                     backgroundColor: 'rgba(196,135,46,0.75)',
                     borderRadius: 6,
                     borderSkipped: false,
                     barPercentage: 0.6,
                   },
                   {
-                    label: '最高估值 (千$)',
-                    data: [1200, 450, 320, 280, 85, 160, 380, 42],
+                    label: '最高估值 (¥)',
+                    data: valueMat?.map(v => v.maxValue) || [],
                     backgroundColor: 'rgba(139,34,64,0.55)',
                     borderRadius: 6,
                     borderSkipped: false,
@@ -87,11 +92,11 @@ export default function AnalyticsPage() {
           <ChartWrapper height={280}>
             <Bar
               data={{
-                labels: eras,
-                datasets: cats.map((cat, ci) => ({
+                labels: heatmap?.eras || [],
+                datasets: (heatmap?.categories || []).map((cat, ci) => ({
                   label: cat,
-                  data: hmData[ci],
-                  backgroundColor: hmColors[ci] + 'AA',
+                  data: heatmap?.matrix.map(row => row[ci]) || [],
+                  backgroundColor: (hmColors[ci % hmColors.length]) + 'AA',
                   borderRadius: 4,
                   borderSkipped: false,
                 })),
@@ -120,9 +125,9 @@ export default function AnalyticsPage() {
           <ChartWrapper height={240}>
             <Doughnut
               data={{
-                labels: ['完好', '良好', '一般', '需修复'],
+                labels: statusDist?.map(s => s.status) || [],
                 datasets: [{
-                  data: [420, 510, 248, 106],
+                  data: statusDist?.map(s => s.count) || [],
                   backgroundColor: ['#4A7C59', chartColors.gold, chartColors.amber, chartColors.wine],
                   borderWidth: 0,
                 }],
@@ -142,9 +147,9 @@ export default function AnalyticsPage() {
           <ChartWrapper height={240}>
             <PolarArea
               data={{
-                labels: ["Christie's/Sotheby's", '古董商', '遗产拍卖', '私人藏家', '线上平台'],
+                labels: sourceDist?.map(s => s.source) || [],
                 datasets: [{
-                  data: [380, 310, 265, 185, 144],
+                  data: sourceDist?.map(s => s.count) || [],
                   backgroundColor: [
                     'rgba(196,135,46,0.7)', 'rgba(139,34,64,0.6)', 'rgba(74,124,89,0.6)',
                     'rgba(91,106,191,0.6)', 'rgba(184,134,11,0.6)',
@@ -165,10 +170,10 @@ export default function AnalyticsPage() {
           <ChartWrapper height={240}>
             <Line
               data={{
-                labels: ['3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月'],
+                labels: valueTrend?.labels || [],
                 datasets: [{
-                  label: '总估值 (百万$)',
-                  data: [6.2, 6.5, 6.8, 7.0, 7.3, 7.5, 7.8, 8.0, 8.2, 8.3, 8.5, 8.6],
+                  label: '总估值 (¥)',
+                  data: valueTrend?.values || [],
                   borderColor: chartColors.gold,
                   backgroundColor: chartColors.goldBg,
                   fill: true,

@@ -1,13 +1,25 @@
 import { useState, useRef } from 'react'
 import GlassCard from '../components/ui/GlassCard'
-import { defaultBrands, defaultColors, defaultEras } from '../data/collections'
+import { useFetch } from '../api/hooks'
+import { erasApi, categoriesApi, materialsApi, brandsApi, colorsApi, collectionsApi } from '../api/services'
 
 const selectArrowBg = "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]"
 
 export default function EntryPage() {
   const [images, setImages] = useState<{ url: string; name: string }[]>([])
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const { data: eras } = useFetch(() => erasApi.list())
+  const { data: categories } = useFetch(() => categoriesApi.list())
+  const { data: materials } = useFetch(() => materialsApi.list())
+  const { data: brands } = useFetch(() => brandsApi.list())
+  const { data: colors } = useFetch(() => colorsApi.list())
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return
@@ -25,6 +37,58 @@ export default function EntryPage() {
       return prev.filter((_, i) => i !== index)
     })
   }
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault()
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()])
+      }
+      setTagInput('')
+    }
+  }
+
+  const handleSubmit = async (continueAfter = false) => {
+    const form = formRef.current
+    if (!form) return
+    const fd = new FormData(form)
+    const name = fd.get('name') as string
+    if (!name?.trim()) {
+      setMessage({ type: 'error', text: '请输入藏品名称' })
+      return
+    }
+
+    setSaving(true)
+    setMessage(null)
+    try {
+      await collectionsApi.create({
+        name: name.trim(),
+        era: fd.get('era') || '',
+        cat: fd.get('cat') || '',
+        material: fd.get('material') || '',
+        brand: fd.get('brand') || '',
+        colorScheme: fd.get('colorScheme') || '',
+        purchasePrice: Number(fd.get('purchasePrice')) || 0,
+        estimatedValue: Number(fd.get('estimatedValue')) || 0,
+        status: fd.get('status') || '完好',
+        source: fd.get('source') || '',
+        date: fd.get('date') || '',
+        description: fd.get('description') || '',
+        tags,
+      })
+      setMessage({ type: 'success', text: '藏品保存成功' })
+      if (continueAfter) {
+        form.reset()
+        setTags([])
+        setImages(prev => { prev.forEach(img => URL.revokeObjectURL(img.url)); return [] })
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : '保存失败' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="fade-in">
       <div className="px-6 md:px-8 pt-8 pb-4">
@@ -52,13 +116,19 @@ export default function EntryPage() {
             </div>
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          {message && (
+            <div className={`mb-4 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-accent-50 text-accent-600'}`}>
+              {message.text}
+            </div>
+          )}
+
+          <form ref={formRef} className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">
                   藏品名称 <span className="text-accent-500">*</span>
                 </label>
-                <input type="text" placeholder="例：Cartier Art Deco 钻石胸针" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+                <input name="name" type="text" placeholder="例：Cartier Art Deco 钻石胸针" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">编号</label>
@@ -71,9 +141,9 @@ export default function EntryPage() {
                 <label className="block text-sm font-medium text-ink-600 mb-2">
                   年代 <span className="text-accent-500">*</span>
                 </label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="era" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择年代</option>
-                  {defaultEras.map(era => (
+                  {(eras || []).map(era => (
                     <option key={era.id} value={era.nameEn}>{era.name} ({era.period})</option>
                   ))}
                 </select>
@@ -82,34 +152,20 @@ export default function EntryPage() {
                 <label className="block text-sm font-medium text-ink-600 mb-2">
                   品类 <span className="text-accent-500">*</span>
                 </label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="cat" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择品类</option>
-                  <option>戒指</option>
-                  <option>项链</option>
-                  <option>手链</option>
-                  <option>胸针</option>
-                  <option>耳饰</option>
-                  <option>吊坠</option>
-                  <option>冠冕</option>
-                  <option>套件</option>
-                  <option>其他</option>
+                  {(categories || []).map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">主要材质</label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="material" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择材质</option>
-                  <option>黄金</option>
-                  <option>铂金</option>
-                  <option>纯银</option>
-                  <option>钻石</option>
-                  <option>红宝石</option>
-                  <option>蓝宝石</option>
-                  <option>祖母绿</option>
-                  <option>珍珠</option>
-                  <option>蛋白石</option>
-                  <option>珐琅</option>
-                  <option>其他</option>
+                  {(materials || []).map(mat => (
+                    <option key={mat.id} value={mat.name}>{mat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -117,18 +173,18 @@ export default function EntryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">品牌</label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="brand" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择品牌</option>
-                  {defaultBrands.map(brand => (
+                  {(brands || []).map(brand => (
                     <option key={brand.id} value={brand.nameEn}>{brand.name} ({brand.nameEn})</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">色系</label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="colorScheme" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择色系</option>
-                  {defaultColors.map(color => (
+                  {(colors || []).map(color => (
                     <option key={color.id} value={color.name}>{color.name} ({color.nameEn})</option>
                   ))}
                 </select>
@@ -138,18 +194,18 @@ export default function EntryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">购入价格 (¥)</label>
-                <input type="number" placeholder="输入购入价格（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+                <input name="purchasePrice" type="number" placeholder="输入购入价格（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">预估价值 (¥)</label>
-                <input type="number" placeholder="输入预估价值（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+                <input name="estimatedValue" type="number" placeholder="输入预估价值（人民币）" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">保存状态</label>
-                <select className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                <select name="status" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择</option>
                   <option>完好</option>
                   <option>良好</option>
@@ -162,17 +218,18 @@ export default function EntryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">入手渠道</label>
-                <input type="text" placeholder="例：Christie's、古董商、遗产拍卖" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+                <input name="source" type="text" placeholder="例：Christie's、古董商、遗产拍卖" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-2">入手日期</label>
-                <input type="date" className="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer" />
+                <input name="date" type="date" className="input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-ink-600 mb-2">藏品描述</label>
               <textarea
+                name="description"
                 rows={4}
                 placeholder="描述藏品的工艺特点、品牌历史、风格流派、宝石参数等详细信息..."
                 className="input-field w-full rounded-xl px-4 py-3 text-sm resize-none"
@@ -183,7 +240,6 @@ export default function EntryPage() {
             <div>
               <label className="block text-sm font-medium text-ink-600 mb-2">藏品图片</label>
 
-              {/* Hidden file inputs */}
               <input
                 ref={cameraInputRef}
                 type="file"
@@ -201,7 +257,6 @@ export default function EntryPage() {
                 onChange={e => { handleFiles(e.target.files); e.target.value = '' }}
               />
 
-              {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <button
                   type="button"
@@ -226,7 +281,6 @@ export default function EntryPage() {
                 </button>
               </div>
 
-              {/* Drop zone (desktop) */}
               <div
                 className="hidden sm:block border-2 border-dashed border-ivory-400 rounded-xl p-6 text-center hover:border-primary-400 transition-colors cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
@@ -241,7 +295,6 @@ export default function EntryPage() {
                 <p className="text-xs text-ink-300 mt-1">支持 JPG、PNG、WebP 格式，单张不超过 10MB</p>
               </div>
 
-              {/* Image preview grid */}
               {images.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4">
                   {images.map((img, i) => (
@@ -266,26 +319,31 @@ export default function EntryPage() {
             <div>
               <label className="block text-sm font-medium text-ink-600 mb-2">标签</label>
               <div className="flex flex-wrap gap-2 mb-3">
-                <span className="tag bg-primary-50 text-primary-600 cursor-pointer hover:bg-primary-100">
-                  宫廷
-                  <svg className="w-3 h-3 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </span>
-                <span className="tag bg-accent-50 text-accent-600 cursor-pointer hover:bg-accent-100">
-                  镶嵌
-                  <svg className="w-3 h-3 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </span>
+                {tags.map(tag => (
+                  <span key={tag} className="tag bg-primary-50 text-primary-600 cursor-pointer hover:bg-primary-100" onClick={() => setTags(tags.filter(t => t !== tag))}>
+                    {tag}
+                    <svg className="w-3 h-3 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                ))}
               </div>
-              <input type="text" placeholder="输入标签后按回车添加" className="input-field w-full rounded-xl px-4 py-3 text-sm" />
+              <input
+                type="text"
+                placeholder="输入标签后按回车添加"
+                className="input-field w-full rounded-xl px-4 py-3 text-sm"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+              />
             </div>
 
             <div className="flex items-center gap-4 pt-4">
-              <button type="button" className="btn-primary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer">保存藏品</button>
-              <button type="button" className="btn-secondary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer">保存并继续</button>
-              <button type="reset" className="text-sm text-ink-400 hover:text-ink-600 cursor-pointer ml-auto">重置表单</button>
+              <button type="button" onClick={() => handleSubmit(false)} disabled={saving} className="btn-primary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50">
+                {saving ? '保存中...' : '保存藏品'}
+              </button>
+              <button type="button" onClick={() => handleSubmit(true)} disabled={saving} className="btn-secondary px-8 py-3 rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50">保存并继续</button>
+              <button type="reset" onClick={() => { setTags([]); setMessage(null) }} className="text-sm text-ink-400 hover:text-ink-600 cursor-pointer ml-auto">重置表单</button>
             </div>
           </form>
         </GlassCard>

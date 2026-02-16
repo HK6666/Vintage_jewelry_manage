@@ -1,6 +1,7 @@
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
 import { chartColors, defaultScales } from '../data/chartConfig'
-import { recentItems } from '../data/collections'
+import { useFetch } from '../api/hooks'
+import { dashboardApi, collectionsApi } from '../api/services'
 import StatCard from '../components/ui/StatCard'
 import GlassCard from '../components/ui/GlassCard'
 import ChartWrapper from '../components/charts/ChartWrapper'
@@ -27,29 +28,11 @@ const sunIcon = (
   </svg>
 )
 
-const recentIconMap: Record<string, { icon: JSX.Element; gradientFrom: string; gradientTo: string }> = {
-  primary: {
-    icon: sparkleIcon,
-    gradientFrom: 'from-primary-200',
-    gradientTo: 'to-primary-100',
-  },
-  accent: {
-    icon: heartIcon,
-    gradientFrom: 'from-accent-100',
-    gradientTo: 'to-accent-50',
-  },
-  ivory: {
-    icon: sunIcon,
-    gradientFrom: 'from-ivory-300',
-    gradientTo: 'to-ivory-200',
-  },
-}
-
-const tagColorMap: Record<string, string> = {
-  primary: 'bg-primary-50 text-primary-600',
-  accent: 'bg-accent-50 text-accent-600',
-  ivory: 'bg-ivory-200 text-ink-600',
-}
+const recentIconCycle = [
+  { icon: sparkleIcon, gradientFrom: 'from-primary-200', gradientTo: 'to-primary-100', tagClass: 'bg-primary-50 text-primary-600' },
+  { icon: heartIcon, gradientFrom: 'from-accent-100', gradientTo: 'to-accent-50', tagClass: 'bg-accent-50 text-accent-600' },
+  { icon: sunIcon, gradientFrom: 'from-ivory-300', gradientTo: 'to-ivory-200', tagClass: 'bg-ivory-200 text-ink-600' },
+]
 
 const trendUp = (text: string) => (
   <p className="text-xs text-primary-500 flex items-center gap-1">
@@ -60,7 +43,19 @@ const trendUp = (text: string) => (
   </p>
 )
 
+function formatValue(val: number): string {
+  if (val >= 1_000_000) return `¥${(val / 1_000_000).toFixed(1)}M`
+  if (val >= 1_000) return `¥${(val / 1_000).toFixed(0)}K`
+  return `¥${val}`
+}
+
 export default function HomePage({ onNavigate }: HomePageProps) {
+  const { data: stats } = useFetch(() => dashboardApi.getStats())
+  const { data: trend } = useFetch(() => dashboardApi.getIntakeTrend())
+  const { data: catDist } = useFetch(() => dashboardApi.getCategoryDistribution())
+  const { data: eraDist } = useFetch(() => dashboardApi.getEraDistribution())
+  const { data: recentItems } = useFetch(() => collectionsApi.getRecent(4))
+
   return (
     <div className="fade-in">
       {/* Header */}
@@ -83,47 +78,47 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <div className="px-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard
           label="藏品总量"
-          value="1,284"
+          value={stats ? stats.totalCount.toLocaleString() : '—'}
           iconBg="bg-primary-50"
           icon={
             <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
             </svg>
           }
-          trend={trendUp('较上月 +23')}
+          trend={stats ? trendUp(`较上月 ${stats.totalCountChange >= 0 ? '+' : ''}${stats.totalCountChange}`) : null}
         />
         <StatCard
           label="估值总额"
-          value="$8.6M"
+          value={stats ? formatValue(stats.totalValue) : '—'}
           iconBg="bg-accent-50"
           icon={
             <svg className="w-5 h-5 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          trend={trendUp('估值增长 12.3%')}
+          trend={stats ? trendUp(`估值增长 ${stats.totalValueChangePercent}%`) : null}
         />
         <StatCard
           label="年代跨度"
-          value="6"
+          value={stats ? String(stats.eraCount) : '—'}
           iconBg="bg-ivory-200"
           icon={
             <svg className="w-5 h-5 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          trend={<p className="text-xs text-ink-400">Victorian · Art Nouveau · Edwardian · Art Deco · Retro · Mid-Century</p>}
+          trend={stats ? <p className="text-xs text-ink-400">{stats.eraNames.join(' · ')}</p> : null}
         />
         <StatCard
           label="本月新增"
-          value="47"
+          value={stats ? String(stats.monthlyNew) : '—'}
           iconBg="bg-primary-50"
           icon={
             <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           }
-          trend={trendUp('较上月 +8')}
+          trend={stats ? trendUp(`较上月 ${stats.monthlyNewChange >= 0 ? '+' : ''}${stats.monthlyNewChange}`) : null}
         />
       </div>
 
@@ -140,10 +135,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <ChartWrapper height={220}>
             <Line
               data={{
-                labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                labels: trend?.labels || [],
                 datasets: [{
                   label: '入库数量',
-                  data: [32, 28, 45, 38, 52, 41, 55, 48, 62, 58, 47, 53],
+                  data: trend?.values || [],
                   borderColor: chartColors.gold,
                   backgroundColor: chartColors.goldBg,
                   fill: true,
@@ -170,9 +165,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <ChartWrapper height={220}>
             <Doughnut
               data={{
-                labels: ['戒指', '项链', '手链', '胸针', '耳饰', '吊坠', '冠冕'],
+                labels: catDist?.map(c => c.name) || [],
                 datasets: [{
-                  data: [320, 215, 198, 156, 142, 168, 85],
+                  data: catDist?.map(c => c.count) || [],
                   backgroundColor: [chartColors.gold, chartColors.wine, chartColors.goldLight, chartColors.green, chartColors.blue, chartColors.amber, chartColors.wineLight],
                   borderWidth: 0,
                   hoverOffset: 6,
@@ -203,23 +198,26 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </button>
           </div>
           <div className="space-y-4">
-            {recentItems.map((item) => {
-              const mapping = recentIconMap[item.color] || recentIconMap.primary
+            {(recentItems || []).map((item, idx) => {
+              const mapping = recentIconCycle[idx % recentIconCycle.length]
               return (
-                <div key={item.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
+                <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-ivory-50 transition-colors cursor-pointer">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mapping.gradientFrom} ${mapping.gradientTo} flex items-center justify-center flex-shrink-0`}>
                     {mapping.icon}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-ink-800 truncate">{item.name}</p>
-                    <p className="text-xs text-ink-400 mt-0.5">{item.desc}</p>
+                    <p className="text-xs text-ink-400 mt-0.5">{item.era} · {item.material}</p>
                   </div>
-                  <span className={`tag ${tagColorMap[item.color] || 'bg-primary-50 text-primary-600'}`}>
-                    {item.price}
+                  <span className={`tag ${mapping.tagClass}`}>
+                    ¥{typeof item.purchasePrice === 'number' ? item.purchasePrice.toLocaleString() : item.purchasePrice}
                   </span>
                 </div>
               )
             })}
+            {recentItems && recentItems.length === 0 && (
+              <p className="text-sm text-ink-400 text-center py-4">暂无藏品数据</p>
+            )}
           </div>
         </GlassCard>
 
@@ -229,10 +227,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <ChartWrapper height={260}>
             <Bar
               data={{
-                labels: ['Victorian', 'Art Nouveau', 'Edwardian', 'Art Deco', 'Retro', 'Mid-Century'],
+                labels: eraDist?.map(e => e.nameEn || e.name) || [],
                 datasets: [{
                   label: '藏品数',
-                  data: [186, 98, 142, 385, 295, 178],
+                  data: eraDist?.map(e => e.count) || [],
                   backgroundColor: [
                     'rgba(196,135,46,0.7)', 'rgba(139,34,64,0.7)', 'rgba(91,106,191,0.7)',
                     'rgba(74,124,89,0.7)', 'rgba(184,134,11,0.7)', 'rgba(160,107,30,0.7)',

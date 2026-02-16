@@ -2,6 +2,8 @@ interface SidebarProps {
   currentPage: string
   onNavigate: (page: string) => void
   isOpen: boolean
+  username?: string
+  onLogout?: () => void
 }
 
 interface NavItem {
@@ -120,7 +122,7 @@ const navItems: NavItem[] = [
   },
 ]
 
-export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProps) {
+export default function Sidebar({ currentPage, onNavigate, isOpen, username, onLogout }: SidebarProps) {
   return (
     <aside
       className={`fixed left-0 top-0 bottom-0 w-64 bg-white/70 backdrop-blur-xl border-r border-ivory-200 z-40 flex flex-col transform transition-transform duration-300 ${
@@ -196,8 +198,19 @@ export default function Sidebar({ currentPage, onNavigate, isOpen }: SidebarProp
             className="w-9 h-9 rounded-full flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-ink-700 truncate">User</p>
+            <p className="text-sm font-medium text-ink-700 truncate">{username || 'User'}</p>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="text-ink-400 hover:text-accent-500 cursor-pointer p-1.5 rounded-lg hover:bg-accent-50/50 transition-colors"
+              title="退出登录"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </aside>

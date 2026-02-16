@@ -17,13 +17,16 @@ No test framework is configured.
 
 This is a **Vite + React 18 + TypeScript** SPA for managing a Western vintage jewelry collection ("珍藏阁"). UI language is Chinese; data content is European/American vintage jewelry (Victorian, Art Deco, Edwardian, etc.).
 
-**Routing** (react-router-dom v6, 6 pages):
+**Routing** (react-router-dom v6, 9 pages):
 - `/` HomePage - dashboard with stat cards and Chart.js charts
 - `/analytics` AnalyticsPage - detailed chart analytics (7 charts)
 - `/entry` EntryPage - multi-step form for adding items
 - `/list` ListPage - table view with category filters
 - `/correlation` CorrelationPage - D3 force-directed correlation graph
 - `/knowledge` KnowledgePage - D3 knowledge graph with zoom/pan
+- `/era-manage` EraManagePage - manage era/period categories
+- `/category-manage` CategoryManagePage - manage item categories
+- `/material-manage` MaterialManagePage - manage material types
 
 **State management**: Local useState only (sidebar open/close in App.tsx). No Redux/Zustand. Navigation callbacks passed as props from App.
 
@@ -49,3 +52,7 @@ The component manages its own SVG lifecycle, zoom behavior, drag handlers, and t
 - `chartConfig.ts` - Chart.js global defaults, color constants, shared scale configs
 - `collections.ts` - Collection items array and filter categories
 - `graphData.ts` - Node/link datasets for both D3 graphs, group colors, labels
+
+## Deployment
+
+Deployed to GitHub Pages with base path `/Vintage_jewelry_manage/` (configured in `vite.config.ts`). The `dist/` folder is committed and served directly.

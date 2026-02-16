@@ -1,13 +1,10 @@
 import GlassCard from '../components/ui/GlassCard'
 import ForceGraph from '../components/graphs/ForceGraph'
-import {
-  knowledgeNodes,
-  knowledgeLinks,
-  knowledgeGroupColors,
-  knowledgeGroupLabels,
-} from '../data/graphData'
+import { useFetch } from '../api/hooks'
+import { knowledgeApi } from '../api/services'
+import type { GraphNode, GraphLink } from '../data/graphData'
 
-const legendItems = [
+const defaultLegend = [
   { label: '藏品', color: '#C4872E' },
   { label: '年代', color: '#8B2240' },
   { label: '材质', color: '#4A7C59' },
@@ -16,6 +13,17 @@ const legendItems = [
 ]
 
 export default function KnowledgePage() {
+  const { data: graphData } = useFetch(() => knowledgeApi.getGraph())
+
+  const nodes: GraphNode[] = graphData?.nodes || []
+  const links: GraphLink[] = graphData?.links || []
+  const groupColors = graphData?.groupColors || {}
+  const groupLabels = graphData?.groupLabels || {}
+
+  const legendItems = Object.entries(groupLabels).length > 0
+    ? Object.entries(groupLabels).map(([key, label]) => ({ label, color: groupColors[key] || '#999' }))
+    : defaultLegend
+
   return (
     <div className="fade-in">
       <div className="px-6 md:px-8 pt-8 pb-4">
@@ -66,17 +74,21 @@ export default function KnowledgePage() {
       {/* Knowledge Graph */}
       <div className="px-6 md:px-8 pb-10">
         <GlassCard className="!p-0 overflow-hidden">
-          <ForceGraph
-            nodes={knowledgeNodes}
-            links={knowledgeLinks}
-            groupColors={knowledgeGroupColors}
-            height={600}
-            linkDistance={100}
-            chargeStrength={-200}
-            showZoomControls={true}
-            groupLabels={knowledgeGroupLabels}
-            variant="knowledge"
-          />
+          {nodes.length > 0 ? (
+            <ForceGraph
+              nodes={nodes}
+              links={links}
+              groupColors={groupColors}
+              height={600}
+              linkDistance={100}
+              chargeStrength={-200}
+              showZoomControls={true}
+              groupLabels={groupLabels}
+              variant="knowledge"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[600px] text-ink-400">加载中...</div>
+          )}
         </GlassCard>
       </div>
     </div>

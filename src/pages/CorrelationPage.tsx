@@ -1,10 +1,23 @@
 import GlassCard from '../components/ui/GlassCard'
 import ForceGraph from '../components/graphs/ForceGraph'
-import { correlationNodes, correlationLinks, correlationGroupColors } from '../data/graphData'
+import { useFetch } from '../api/hooks'
+import { correlationsApi } from '../api/services'
+import type { GraphNode, GraphLink } from '../data/graphData'
 
 const selectArrowBg = "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]"
 
 export default function CorrelationPage() {
+  const { data: graphData } = useFetch(() => correlationsApi.getGraph())
+  const { data: strongPairs } = useFetch(() => correlationsApi.getStrongPairs({ limit: 5 }))
+
+  const nodes: GraphNode[] = graphData?.nodes || []
+  const links: GraphLink[] = graphData?.links || []
+  const groupColors = graphData?.groupColors || {}
+
+  const pairColors = ['bg-primary-50/50 border-primary-100', 'bg-accent-50/50 border-accent-100', 'bg-ivory-100/50 border-ivory-200']
+  const pairTextColors = ['text-primary-600', 'text-accent-600', 'text-ink-600']
+  const pairBarColors = ['bg-primary-400', 'bg-accent-400', 'bg-ink-400']
+
   return (
     <div className="fade-in">
       <div className="px-6 md:px-8 pt-8 pb-4">
@@ -34,15 +47,19 @@ export default function CorrelationPage() {
         {/* Correlation Graph */}
         <GlassCard className="lg:col-span-2">
           <h3 className="font-heading text-lg font-semibold text-ink-800 mb-4">关联网络图</h3>
-          <ForceGraph
-            nodes={correlationNodes}
-            links={correlationLinks}
-            groupColors={correlationGroupColors}
-            height={500}
-            linkDistance={120}
-            chargeStrength={-300}
-            variant="correlation"
-          />
+          {nodes.length > 0 ? (
+            <ForceGraph
+              nodes={nodes}
+              links={links}
+              groupColors={groupColors}
+              height={500}
+              linkDistance={120}
+              chargeStrength={-300}
+              variant="correlation"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[500px] text-ink-400">加载中...</div>
+          )}
         </GlassCard>
 
         {/* Correlation Details */}
@@ -50,54 +67,30 @@ export default function CorrelationPage() {
           <GlassCard className="!p-5">
             <h4 className="font-heading font-semibold text-ink-800 mb-4">强关联组</h4>
             <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-primary-50/50 border border-primary-100">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-ink-700">钻石 - Art Deco</span>
-                  <span className="text-xs font-semibold text-primary-600">92%</span>
+              {(strongPairs || []).slice(0, 3).map((pair, i) => (
+                <div key={`${pair.nodeA}-${pair.nodeB}`} className={`p-3 rounded-xl border ${pairColors[i % pairColors.length]}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-ink-700">{pair.nodeA} - {pair.nodeB}</span>
+                    <span className={`text-xs font-semibold ${pairTextColors[i % pairTextColors.length]}`}>{Math.round(pair.strength * 100)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-ivory-200 rounded-full">
+                    <div className={`h-full rounded-full ${pairBarColors[i % pairBarColors.length]}`} style={{ width: `${pair.strength * 100}%` }} />
+                  </div>
+                  <p className="text-xs text-ink-400 mt-1.5">共 {pair.sharedCount} 件藏品共享此关联</p>
                 </div>
-                <div className="w-full h-1.5 bg-ivory-200 rounded-full">
-                  <div className="h-full bg-primary-400 rounded-full" style={{ width: '92%' }} />
-                </div>
-                <p className="text-xs text-ink-400 mt-1.5">共 168 件藏品共享此关联</p>
-              </div>
-              <div className="p-3 rounded-xl bg-accent-50/50 border border-accent-100">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-ink-700">铂金 - Edwardian</span>
-                  <span className="text-xs font-semibold text-accent-600">87%</span>
-                </div>
-                <div className="w-full h-1.5 bg-ivory-200 rounded-full">
-                  <div className="h-full bg-accent-400 rounded-full" style={{ width: '87%' }} />
-                </div>
-                <p className="text-xs text-ink-400 mt-1.5">共 98 件藏品共享此关联</p>
-              </div>
-              <div className="p-3 rounded-xl bg-ivory-100/50 border border-ivory-200">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-ink-700">珐琅 - Art Nouveau</span>
-                  <span className="text-xs font-semibold text-ink-600">78%</span>
-                </div>
-                <div className="w-full h-1.5 bg-ivory-200 rounded-full">
-                  <div className="h-full bg-ink-400 rounded-full" style={{ width: '78%' }} />
-                </div>
-                <p className="text-xs text-ink-400 mt-1.5">共 72 件藏品共享此关联</p>
-              </div>
+              ))}
             </div>
           </GlassCard>
 
           <GlassCard className="!p-5">
             <h4 className="font-heading font-semibold text-ink-800 mb-4">关联洞察</h4>
             <div className="space-y-3">
-              <div className="flex gap-3">
-                <div className="w-1 rounded-full bg-primary-400 flex-shrink-0" />
-                <p className="text-sm text-ink-500">Art Deco 时期大量使用钻石微镶工艺，几何造型为标志性设计语言</p>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-1 rounded-full bg-accent-400 flex-shrink-0" />
-                <p className="text-sm text-ink-500">Edwardian 时期铂金首次广泛用于珠宝，搭配珍珠和花丝工艺</p>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-1 rounded-full bg-ink-300 flex-shrink-0" />
-                <p className="text-sm text-ink-500">Art Nouveau 珐琅胸针以 Lalique 和 Fouquet 作品为代表，自然主义风格显著</p>
-              </div>
+              {(strongPairs || []).filter(p => p.insight).slice(0, 3).map((pair, i) => (
+                <div key={`insight-${pair.nodeA}-${pair.nodeB}`} className="flex gap-3">
+                  <div className={`w-1 rounded-full flex-shrink-0 ${pairBarColors[i % pairBarColors.length]}`} />
+                  <p className="text-sm text-ink-500">{pair.insight}</p>
+                </div>
+              ))}
             </div>
           </GlassCard>
         </div>
