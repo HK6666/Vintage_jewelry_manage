@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Vintage Vault** — 西方古董珠宝藏品管理系统。前端 React SPA 部署在 GitHub Pages，后端 Flask REST API 部署在独立服务器。
+**Vintage Vault** — 西方古董珠宝藏品管理系统。前端 React SPA + 后端 Flask REST API，通过 Docker Compose 部署在同一台服务器上（nginx 容器托管前端 + 反代 API，backend 容器跑 gunicorn）。
 
 ## Repository Structure
 
@@ -14,19 +14,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── pages/            # 12 个页面组件 (含 LoginPage)
 │   ├── components/       # 复用组件 (layout, charts, graphs, ui)
 │   └── data/             # Chart.js 配置 & 图表颜色常量
-├── dist/                 # 前端构建产物 (提交到 Git, GitHub Pages 直接托管)
+├── dist/                 # 前端构建产物 (提交到 Git)
 ├── backend/              # Flask 后端
 │   ├── app/
 │   │   ├── api/          # 14 个 Blueprint 模块 (REST 路由)
 │   │   ├── models/       # 8 个 SQLAlchemy 模型
 │   │   ├── seeds/        # 种子数据 (eras, categories, materials, brands, colors)
 │   │   └── utils/        # response 封装, pagination, decorators
+│   ├── Dockerfile        # 后端容器镜像
 │   ├── run.py            # Flask 入口
 │   ├── requirements.txt  # Python 依赖
-│   ├── deploy.sh         # 服务器一键部署脚本
 │   └── .env.example      # 环境变量模板
-├── .env.production       # 前端生产构建 API 地址 (不提交到 Git)
-└── .env.production.example
+├── docker/
+│   └── nginx.conf        # nginx 容器配置 (前端静态文件 + API 反代)
+├── docker-compose.yml    # 编排: nginx + backend 两个容器
+└── .env.production       # 前端构建 API 地址 (不提交, 值为 /api/v1)
 ```
 
 ## Build & Dev Commands
@@ -37,7 +39,7 @@ npm run dev          # Vite 开发服务器 (localhost:5173, 自动代理 /api �
 npm run build        # TypeScript 检查 + Vite 生产构建 (输出到 dist/)
 npx tsc -b           # 仅类型检查
 
-# 后端 (在 backend/ 目录下)
+# 后端本地开发 (在 backend/ 目录下)
 source venv/bin/activate
 export FLASK_APP=run.py
 flask init-db        # 创建数据库表
@@ -108,57 +110,122 @@ No test framework is configured.
 
 **Management pages pattern**: All 5 management pages follow the same structure — `useFetch` to load list → inline form for create/edit → `refetch()` after mutation.
 
-## Deployment
+## Deployment (Docker Compose)
 
-### Frontend — GitHub Pages
-- Base path: `/Vintage_jewelry_manage/` (in `vite.config.ts`)
-- `dist/` folder is committed to Git and served directly
-- Production API address configured in `.env.production`:
-  ```
-  VITE_API_BASE=http://43.247.134.107:8000/api/v1
-  ```
+服务器地址: `43.247.134.107`，访问端口 `8080`。
 
-### Backend — Ubuntu Server (43.247.134.107:8000)
-- Gunicorn + systemd service (`vintage-vault`)
-- SQLite database at `backend/vintage_vault.db`
+### Docker 架构
 
-**Deploy/update flow**:
+```
+docker-compose.yml
+├── nginx 容器 (端口 8080:80)
+│   ├── 托管 dist/ 前端静态文件
+│   └── 反代 /api/ → backend:5000
+└── backend 容器 (内部端口 5000)
+    ├── gunicorn + Flask
+    └── SQLite 数据库 (Docker volume 持久化)
+```
+
+### 首次部署 (服务器上从零开始)
+
 ```bash
-# 服务器上
-cd ~/zhongu/Vintage_jewelry_manage
-git fetch --all && git reset --hard origin/main
+# 1. 安装 Docker (如果没有)
+curl -fsSL https://get.docker.com | sh
+
+# 2. 克隆代码
+git clone https://github.com/HK6666/Vintage_jewelry_manage.git
+cd Vintage_jewelry_manage
+
+# 3. 创建后端 .env
 cd backend
-chmod +x deploy.sh && ./deploy.sh
+SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+cat > .env << EOF
+FLASK_ENV=production
+SECRET_KEY=${SECRET}
+JWT_SECRET_KEY=${JWT_SECRET}
+DATABASE_URL=sqlite:////app/vintage_vault.db
+UPLOAD_FOLDER=uploads
+EOF
+cd ..
+
+# 4. 启动容器
+docker compose up -d --build
+
+# 5. 初始化数据库和种子数据
+docker compose exec backend flask init-db
+docker compose exec backend flask seed
+
+# 6. 防火墙放行 8080 端口 (如果需要)
+ufw allow 8080/tcp 2>/dev/null || true
 ```
 
-**Manual commands**:
-```bash
-systemctl status vintage-vault     # 查看状态
-systemctl restart vintage-vault    # 重启
-systemctl stop vintage-vault       # 停止
-journalctl -u vintage-vault -f     # 实时日志
-```
+部署完成后访问: `http://43.247.134.107:8080`
+登录账号: `admin` / `admin123321`
 
-**Deploy new frontend changes**:
+### 更新前端代码
+
 ```bash
 # 本地
 npm run build
 git add dist
 git commit -m "deploy: rebuild dist"
 git push
-# GitHub Pages 自动更新 (1-2 分钟)
+
+# 服务器
+cd ~/Vintage_jewelry_manage
+git fetch --all && git reset --hard origin/main
+docker compose restart nginx
 ```
 
-**Deploy backend changes**:
+### 更新后端代码
+
 ```bash
-# 本地: push 代码后
-# 服务器:
-cd ~/zhongu/Vintage_jewelry_manage
+# 本地 push 代码后，服务器执行:
+cd ~/Vintage_jewelry_manage
 git fetch --all && git reset --hard origin/main
-systemctl restart vintage-vault
+docker compose up -d --build backend
+```
+
+如果改了数据库模型 (加了字段/表):
+```bash
+docker compose exec backend flask init-db
+docker compose restart backend
+```
+
+如果加了新 Python 依赖 (requirements.txt):
+```bash
+docker compose up -d --build backend
+```
+
+### 前后端同时更新
+
+```bash
+# 本地
+npm run build
+git add .
+git commit -m "feat: xxx"
+git push
+
+# 服务器
+cd ~/Vintage_jewelry_manage
+git fetch --all && git reset --hard origin/main
+docker compose up -d --build
+```
+
+### 常用运维命令
+
+```bash
+docker compose ps                          # 查看容器状态
+docker compose logs -f backend             # 后端实时日志
+docker compose logs -f nginx               # nginx 实时日志
+docker compose restart                     # 重启所有容器
+docker compose down                        # 停止并移除容器
+docker compose down -v                     # 停止并移除容器+数据卷(会丢数据库!)
+docker compose exec backend flask seed     # 重新写入种子数据
 ```
 
 ### Credentials
 - Admin: `admin` / `admin123321`
 - JWT tokens stored in `localStorage['jwt_token']`
-- Server `.env` contains SECRET_KEY and JWT_SECRET_KEY (auto-generated by deploy.sh)
+- Server `backend/.env` contains SECRET_KEY and JWT_SECRET_KEY
