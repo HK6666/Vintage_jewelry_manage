@@ -13,7 +13,6 @@ set -euo pipefail
 
 # ---------- 配置区 ----------
 APP_NAME="vintage-vault"
-APP_SERVICE_USER="vintage"        # 专用运行用户（root 登录时自动创建）
 APP_USER="${SUDO_USER:-$(whoami)}"
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$APP_DIR/venv"
@@ -70,18 +69,9 @@ if [ "$EUID" -ne 0 ]; then
     fatal "请用 sudo 运行: sudo ./deploy.sh"
 fi
 
-# 2) root 登录时自动创建专用用户
+# 2) root 用户提示
 if [ "$APP_USER" = "root" ]; then
-    warn "检测到以 root 直接登录，将创建专用用户 '$APP_SERVICE_USER' 来运行服务"
-    if ! id "$APP_SERVICE_USER" &>/dev/null; then
-        useradd -r -m -s /bin/bash "$APP_SERVICE_USER" 2>/dev/null || useradd -m -s /bin/bash "$APP_SERVICE_USER"
-        info "已创建用户: $APP_SERVICE_USER"
-    else
-        info "用户 $APP_SERVICE_USER 已存在"
-    fi
-    APP_USER="$APP_SERVICE_USER"
-    # 确保该用户对应用目录有权限
-    chown -R "$APP_USER":"$APP_USER" "$APP_DIR"
+    warn "以 root 身份运行服务（生产环境建议使用普通用户）"
 fi
 
 # 3) requirements.txt 存在
@@ -339,10 +329,7 @@ Restart=on-failure
 RestartSec=5
 
 # 安全加固
-NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=strict
-ReadWritePaths=${APP_DIR}
 
 [Install]
 WantedBy=multi-user.target
