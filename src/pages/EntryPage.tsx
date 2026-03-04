@@ -14,6 +14,7 @@ export default function EntryPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const submittingRef = useRef(false)
 
   const { data: eras } = useFetch(() => erasApi.list())
   const { data: categories } = useFetch(() => categoriesApi.list())
@@ -49,6 +50,7 @@ export default function EntryPage() {
   }
 
   const handleSubmit = async (continueAfter = false) => {
+    if (submittingRef.current) return
     const form = formRef.current
     if (!form) return
     const fd = new FormData(form)
@@ -58,6 +60,7 @@ export default function EntryPage() {
       return
     }
 
+    submittingRef.current = true
     setSaving(true)
     setMessage(null)
     try {
@@ -86,6 +89,7 @@ export default function EntryPage() {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : '保存失败' })
     } finally {
       setSaving(false)
+      submittingRef.current = false
     }
   }
 

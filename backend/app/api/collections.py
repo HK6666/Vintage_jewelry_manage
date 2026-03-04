@@ -1,7 +1,8 @@
 import logging
 import os
+from datetime import datetime, timedelta
 from flask import Blueprint, request, current_app
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from ..extensions import db
 from ..models import Collection, Image, Tag, Era, Category, Brand, Color
@@ -104,6 +105,16 @@ def create_collection():
 
     if not data.get('name'):
         return error('藏品名称不能为空', 400)
+
+    # Dedup: reject if same name was created within last 5 seconds
+    recent_cutoff = datetime.utcnow() - timedelta(seconds=5)
+    duplicate = Collection.query.filter(
+        Collection.name == data['name'],
+        Collection.created_at >= recent_cutoff,
+    ).first()
+    if duplicate:
+        logger.warning(f"Duplicate submission blocked: name={data['name']}")
+        return success(duplicate.to_dict(), '藏品已保存，请勿重复提交')
 
     item = Collection(
         name=data['name'],
