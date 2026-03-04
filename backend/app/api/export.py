@@ -17,7 +17,7 @@ def export_collections():
     ids_str = request.args.get('ids', '')
     logger.info(f"GET /export/collections - format: {fmt}, ids: {ids_str}")
 
-    query = Collection.query
+    query = Collection.query.filter_by(is_deleted=False)
 
     if ids_str:
         ids = [int(x) for x in ids_str.split(',') if x.strip().isdigit()]

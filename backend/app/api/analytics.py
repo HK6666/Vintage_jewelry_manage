@@ -13,8 +13,8 @@ bp = Blueprint('analytics', __name__)
 @bp.route('/summary', methods=['GET'])
 def summary():
     logger.info("GET /analytics/summary")
-    avg_value = db.session.query(func.avg(Collection.estimated_value)).scalar() or 0
-    max_value = db.session.query(func.max(Collection.estimated_value)).scalar() or 0
+    avg_value = db.session.query(func.avg(Collection.estimated_value)).filter(Collection.is_deleted == False).scalar() or 0
+    max_value = db.session.query(func.max(Collection.estimated_value)).filter(Collection.is_deleted == False).scalar() or 0
     material_count = Material.query.count()
     brand_count = Brand.query.count()
 
@@ -33,7 +33,7 @@ def value_by_material():
         Collection.material,
         func.avg(Collection.estimated_value).label('avg_val'),
         func.max(Collection.estimated_value).label('max_val'),
-    ).filter(Collection.material != '').group_by(Collection.material).all()
+    ).filter(Collection.is_deleted == False, Collection.material != '').group_by(Collection.material).all()
 
     data = [
         {'material': r[0], 'avgValue': round(r[1], 2), 'maxValue': r[2]}
@@ -55,7 +55,7 @@ def era_category_heatmap():
     for era in eras:
         row = []
         for cat in categories:
-            count = Collection.query.filter_by(era_id=era.id, category_id=cat.id).count()
+            count = Collection.query.filter_by(is_deleted=False, era_id=era.id, category_id=cat.id).count()
             row.append(count)
         matrix.append(row)
 
@@ -72,7 +72,7 @@ def status_distribution():
     results = db.session.query(
         Collection.status,
         func.count(Collection.id),
-    ).group_by(Collection.status).all()
+    ).filter(Collection.is_deleted == False).group_by(Collection.status).all()
 
     data = [{'status': r[0], 'count': r[1]} for r in results]
     return success(data)
@@ -84,7 +84,7 @@ def source_distribution():
     results = db.session.query(
         Collection.source,
         func.count(Collection.id),
-    ).filter(Collection.source != '').group_by(Collection.source).order_by(
+    ).filter(Collection.is_deleted == False, Collection.source != '').group_by(Collection.source).order_by(
         func.count(Collection.id).desc()
     ).all()
 
@@ -108,6 +108,7 @@ def value_trend():
         labels.append(label)
 
         total = db.session.query(func.sum(Collection.estimated_value)).filter(
+            Collection.is_deleted == False,
             extract('year', Collection.created_at) <= year,
             db.or_(
                 extract('year', Collection.created_at) < year,

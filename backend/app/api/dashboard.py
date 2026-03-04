@@ -13,8 +13,8 @@ bp = Blueprint('dashboard', __name__)
 @bp.route('/stats', methods=['GET'])
 def stats():
     logger.info("GET /dashboard/stats")
-    total_count = Collection.query.count()
-    total_value = db.session.query(func.sum(Collection.estimated_value)).scalar() or 0
+    total_count = Collection.query.filter_by(is_deleted=False).count()
+    total_value = db.session.query(func.sum(Collection.estimated_value)).filter(Collection.is_deleted == False).scalar() or 0
 
     era_count = Era.query.count()
     eras = Era.query.order_by(Era.id.asc()).all()
@@ -22,10 +22,11 @@ def stats():
 
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    monthly_new = Collection.query.filter(Collection.created_at >= month_start).count()
+    monthly_new = Collection.query.filter(Collection.is_deleted == False, Collection.created_at >= month_start).count()
 
     prev_month_start = (month_start - timedelta(days=1)).replace(day=1)
     prev_monthly = Collection.query.filter(
+        Collection.is_deleted == False,
         Collection.created_at >= prev_month_start,
         Collection.created_at < month_start,
     ).count()
@@ -54,6 +55,7 @@ def intake_trend():
         extract('month', Collection.created_at).label('month'),
         func.count(Collection.id),
     ).filter(
+        Collection.is_deleted == False,
         extract('year', Collection.created_at) == year
     ).group_by('month').order_by('month').all()
 

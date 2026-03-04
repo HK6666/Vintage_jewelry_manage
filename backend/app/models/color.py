@@ -23,7 +23,7 @@ class Color(db.Model):
             'nameEn': self.name_en,
             'hex': self.hex,
             'description': self.description,
-            'count': self.collections.count(),
+            'count': self.collections.filter_by(is_deleted=False).count(),
             'createdAt': self.created_at.isoformat() + 'Z' if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() + 'Z' if self.updated_at else None,
         }

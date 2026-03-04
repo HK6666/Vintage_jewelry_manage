@@ -32,7 +32,7 @@ def graph():
     links = []
     node_ids = set()
 
-    collections = Collection.query.all()
+    collections = Collection.query.filter_by(is_deleted=False).all()
 
     for c in collections:
         item_id = c.name

@@ -18,7 +18,7 @@ def list_collections():
     logger.info(f"GET /collections - args: {dict(request.args)}")
     page, page_size, sort_by, order = parse_pagination()
 
-    query = Collection.query
+    query = Collection.query.filter_by(is_deleted=False)
 
     keyword = request.args.get('keyword', '')
     if keyword:
@@ -91,7 +91,7 @@ def list_collections():
 def get_collection(id):
     logger.info(f"GET /collections/{id}")
     item = db.session.get(Collection, id)
-    if not item:
+    if not item or item.is_deleted:
         logger.warning(f"Collection id={id} not found")
         return error('藏品不存在', 404)
     return success(item.to_dict())
@@ -179,7 +179,7 @@ def update_collection(id):
     logger.info(f"PUT /collections/{id}")
 
     item = db.session.get(Collection, id)
-    if not item:
+    if not item or item.is_deleted:
         logger.warning(f"Collection id={id} not found")
         return error('藏品不存在', 404)
 
@@ -240,14 +240,14 @@ def update_collection(id):
 def delete_collection(id):
     logger.info(f"DELETE /collections/{id}")
     item = db.session.get(Collection, id)
-    if not item:
+    if not item or item.is_deleted:
         logger.warning(f"Collection id={id} not found")
         return error('藏品不存在', 404)
 
     try:
-        db.session.delete(item)
+        item.is_deleted = True
         db.session.commit()
-        logger.info(f"Deleted collection id={id}")
+        logger.info(f"Soft-deleted collection id={id}")
         return success(message='删除成功')
     except Exception as e:
         db.session.rollback()
@@ -266,9 +266,9 @@ def batch_delete_collections():
         return error('请提供要删除的藏品ID列表', 400)
 
     try:
-        Collection.query.filter(Collection.id.in_(ids)).delete(synchronize_session=False)
+        Collection.query.filter(Collection.id.in_(ids)).update({'is_deleted': True}, synchronize_session=False)
         db.session.commit()
-        logger.info(f"Batch deleted collections: {ids}")
+        logger.info(f"Batch soft-deleted collections: {ids}")
         return success(message='批量删除成功')
     except Exception as e:
         db.session.rollback()
@@ -281,7 +281,7 @@ def batch_delete_collections():
 def upload_images(id):
     logger.info(f"POST /collections/{id}/images")
     item = db.session.get(Collection, id)
-    if not item:
+    if not item or item.is_deleted:
         return error('藏品不存在', 404)
 
     files = request.files.getlist('images')
@@ -359,5 +359,5 @@ def sort_images(id):
 def recent_collections():
     limit = request.args.get('limit', 10, type=int)
     logger.info(f"GET /collections/recent - limit: {limit}")
-    items = Collection.query.order_by(Collection.created_at.desc()).limit(limit).all()
+    items = Collection.query.filter_by(is_deleted=False).order_by(Collection.created_at.desc()).limit(limit).all()
     return success([item.to_dict() for item in items])

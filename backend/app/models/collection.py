@@ -42,6 +42,7 @@ class Collection(db.Model):
     description = db.Column(db.Text, default='')
     source = db.Column(db.String(200), default='')
     date = db.Column(db.String(20), default='')
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
