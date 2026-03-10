@@ -1,4 +1,4 @@
-import { get, post, put, del, setToken, clearToken } from './client'
+import { get, post, put, del, upload, setToken, clearToken } from './client'
 import type {
   CollectionItem, EraItem, CategoryItem, MaterialItem, BrandItem, ColorItem,
   PaginatedResponse, DashboardStats, ChartData, CategoryDistribution,
@@ -51,6 +51,12 @@ export const collectionsApi = {
   create: (data: Record<string, unknown>) => post<CollectionItem>('/collections', data),
   update: (id: number, data: Record<string, unknown>) => put<CollectionItem>(`/collections/${id}`, data),
   remove: (id: number) => del<void>(`/collections/${id}`),
+  uploadImages: (id: number, files: File[]) => {
+    const fd = new FormData()
+    files.forEach(f => fd.append('images', f))
+    return upload<{ images: { id: number; url: string; sort: number }[] }>(`/collections/${id}/images`, fd)
+  },
+  deleteImage: (collectionId: number, imageId: number) => del<void>(`/collections/${collectionId}/images/${imageId}`),
 }
 
 // Eras

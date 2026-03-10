@@ -133,6 +133,31 @@ export default function ListPage({ onNavigate }: ListPageProps) {
     }
   }
 
+  // Image handlers for edit modal
+  const editFileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!editItem) return
+    try {
+      await collectionsApi.deleteImage(editItem.id, imageId)
+      setEditItem({ ...editItem, images: editItem.images.filter(img => img.id !== imageId) })
+    } catch {
+      setEditMessage({ type: 'error', text: '删除图片失败' })
+    }
+  }
+
+  const handleEditFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0 || !editItem) return
+    try {
+      const result = await collectionsApi.uploadImages(editItem.id, Array.from(files))
+      setEditItem({ ...editItem, images: [...editItem.images, ...result.images] })
+    } catch {
+      setEditMessage({ type: 'error', text: '上传图片失败' })
+    }
+    e.target.value = ''
+  }
+
   const renderPageButtons = () => {
     const buttons: JSX.Element[] = []
     const maxVisible = 5
@@ -251,11 +276,15 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                     <tr key={item.id} className="table-row border-b border-ivory-100/60">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-100 to-ivory-200 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                            </svg>
-                          </div>
+                          {item.images?.length > 0 ? (
+                            <img src={item.images[0].url} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-100 to-ivory-200 flex items-center justify-center flex-shrink-0">
+                              <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                              </svg>
+                            </div>
+                          )}
                           <span className="font-medium text-ink-800">{item.name}</span>
                         </div>
                       </td>
@@ -370,6 +399,30 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                 {editMessage.text}
               </div>
             )}
+
+            {/* Image section */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-ink-600 mb-2">藏品图片</label>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {editItem.images?.map(img => (
+                  <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden bg-ivory-100">
+                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => handleDeleteImage(img.id)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <input ref={editFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleEditFiles} />
+              <button type="button" onClick={() => editFileInputRef.current?.click()} className="mt-3 btn-secondary px-4 py-2 rounded-xl text-sm cursor-pointer flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                添加图片
+              </button>
+            </div>
 
             <form ref={editFormRef} className="space-y-5" onSubmit={e => e.preventDefault()}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

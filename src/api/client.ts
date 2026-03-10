@@ -63,3 +63,25 @@ export function del<T>(path: string, body?: unknown): Promise<T> {
     ...(body ? { body: JSON.stringify(body) } : {}),
   })
 }
+
+export async function upload<T>(path: string, formData: FormData): Promise<T> {
+  const headers: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    throw new ApiError(res.status, json.message || '请求失败')
+  }
+
+  return json.data as T
+}
