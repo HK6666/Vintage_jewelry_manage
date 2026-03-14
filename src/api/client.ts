@@ -77,7 +77,17 @@ export async function upload<T>(path: string, formData: FormData): Promise<T> {
     body: formData,
   })
 
-  const json = await res.json()
+  if (res.status === 413) {
+    throw new ApiError(413, '文件太大，请减少图片数量或压缩后重试')
+  }
+
+  const text = await res.text()
+  let json: { message?: string; data?: T }
+  try {
+    json = JSON.parse(text)
+  } catch {
+    throw new ApiError(res.status, '服务器响应异常')
+  }
 
   if (!res.ok) {
     throw new ApiError(res.status, json.message || '请求失败')
