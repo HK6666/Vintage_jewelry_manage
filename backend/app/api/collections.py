@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 from datetime import datetime, timedelta
 from flask import Blueprint, request, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -295,7 +296,10 @@ def upload_images(id):
     created_images = []
 
     for f in files:
-        filename = secure_filename(f.filename)
+        # Use UUID filename to avoid collisions from non-ASCII names or duplicates
+        orig = secure_filename(f.filename) or 'image'
+        ext = orig.rsplit('.', 1)[1].lower() if '.' in orig else 'jpg'
+        filename = f'{uuid.uuid4().hex}.{ext}'
         filepath = os.path.join(upload_dir, filename)
         f.save(filepath)
 
