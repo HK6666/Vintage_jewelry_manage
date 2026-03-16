@@ -56,7 +56,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd ~/zhonggu/Vintage_jewelry_manage
+            cd ~/zhongu/Vintage_jewelry_manage
 
             # 拉取最新代码（含刚提交的 dist/）
             git fetch --all
