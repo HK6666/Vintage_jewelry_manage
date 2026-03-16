@@ -188,7 +188,7 @@ export default function EntryPage() {
                 <select name="brand" className={`input-field w-full rounded-xl px-4 py-3 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                   <option value="">请选择品牌</option>
                   {(brands || []).map(brand => (
-                    <option key={brand.id} value={brand.nameEn}>{brand.name} ({brand.nameEn})</option>
+                    <option key={brand.id} value={brand.name}>{brand.name} ({brand.nameEn})</option>
                   ))}
                 </select>
               </div>

@@ -29,9 +29,12 @@ export default function ListPage({ onNavigate }: ListPageProps) {
   const [editItem, setEditItem] = useState<CollectionItem | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [editMessage, setEditMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const editFormRef = useRef<HTMLFormElement>(null)
   const [editTags, setEditTags] = useState<string[]>([])
   const [editTagInput, setEditTagInput] = useState('')
+  const [editForm, setEditForm] = useState({
+    name: '', era: '', cat: '', material: '', brand: '', colorScheme: '',
+    purchasePrice: 0, estimatedValue: 0, status: '完好', source: '', date: '', description: '',
+  })
 
   // Delete confirm state
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -73,6 +76,12 @@ export default function ListPage({ onNavigate }: ListPageProps) {
   // Edit handlers
   const openEdit = (item: CollectionItem) => {
     setEditItem(item)
+    setEditForm({
+      name: item.name, era: item.era, cat: item.cat, material: item.material,
+      brand: item.brand, colorScheme: item.colorScheme,
+      purchasePrice: item.purchasePrice, estimatedValue: item.estimatedValue,
+      status: item.status, source: item.source, date: item.date, description: item.description,
+    })
     setEditTags(item.tags || [])
     setEditTagInput('')
     setEditMessage(null)
@@ -84,11 +93,8 @@ export default function ListPage({ onNavigate }: ListPageProps) {
   }
 
   const handleEditSubmit = async () => {
-    const form = editFormRef.current
-    if (!form || !editItem) return
-    const fd = new FormData(form)
-    const name = fd.get('name') as string
-    if (!name?.trim()) {
+    if (!editItem) return
+    if (!editForm.name.trim()) {
       setEditMessage({ type: 'error', text: '请输入藏品名称' })
       return
     }
@@ -97,18 +103,8 @@ export default function ListPage({ onNavigate }: ListPageProps) {
     setEditMessage(null)
     try {
       await collectionsApi.update(editItem.id, {
-        name: name.trim(),
-        era: fd.get('era') || '',
-        cat: fd.get('cat') || '',
-        material: fd.get('material') || '',
-        brand: fd.get('brand') || '',
-        colorScheme: fd.get('colorScheme') || '',
-        purchasePrice: Number(fd.get('purchasePrice')) || 0,
-        estimatedValue: Number(fd.get('estimatedValue')) || 0,
-        status: fd.get('status') || '完好',
-        source: fd.get('source') || '',
-        date: fd.get('date') || '',
-        description: fd.get('description') || '',
+        ...editForm,
+        name: editForm.name.trim(),
         tags: editTags,
       })
       setEditMessage({ type: 'success', text: '更新成功' })
@@ -429,15 +425,15 @@ export default function ListPage({ onNavigate }: ListPageProps) {
               </button>
             </div>
 
-            <form ref={editFormRef} className="space-y-5" onSubmit={e => e.preventDefault()}>
+            <form className="space-y-5" onSubmit={e => e.preventDefault()}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">藏品名称 <span className="text-accent-500">*</span></label>
-                  <input name="name" type="text" defaultValue={editItem.name} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
+                  <input type="text" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">年代</label>
-                  <select name="era" defaultValue={editItem.era} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.era} onChange={e => setEditForm(f => ({ ...f, era: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option value="">请选择年代</option>
                     {(eras || []).map(era => (
                       <option key={era.id} value={era.name}>{era.name} ({era.period})</option>
@@ -449,7 +445,7 @@ export default function ListPage({ onNavigate }: ListPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">品类</label>
-                  <select name="cat" defaultValue={editItem.cat} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.cat} onChange={e => setEditForm(f => ({ ...f, cat: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option value="">请选择品类</option>
                     {(categories || []).map(cat => (
                       <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -458,7 +454,7 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">材质</label>
-                  <select name="material" defaultValue={editItem.material} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.material} onChange={e => setEditForm(f => ({ ...f, material: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option value="">请选择材质</option>
                     {(materials || []).map(mat => (
                       <option key={mat.id} value={mat.name}>{mat.name}</option>
@@ -467,10 +463,10 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">品牌</label>
-                  <select name="brand" defaultValue={editItem.brand} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.brand} onChange={e => setEditForm(f => ({ ...f, brand: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option value="">请选择品牌</option>
                     {(brands || []).map(brand => (
-                      <option key={brand.id} value={brand.nameEn}>{brand.name} ({brand.nameEn})</option>
+                      <option key={brand.id} value={brand.name}>{brand.name} ({brand.nameEn})</option>
                     ))}
                   </select>
                 </div>
@@ -479,7 +475,7 @@ export default function ListPage({ onNavigate }: ListPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">色系</label>
-                  <select name="colorScheme" defaultValue={editItem.colorScheme} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.colorScheme} onChange={e => setEditForm(f => ({ ...f, colorScheme: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option value="">请选择色系</option>
                     {(colors || []).map(color => (
                       <option key={color.id} value={color.name}>{color.name} ({color.nameEn})</option>
@@ -488,7 +484,7 @@ export default function ListPage({ onNavigate }: ListPageProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">保存状态</label>
-                  <select name="status" defaultValue={editItem.status} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
+                  <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} className={`input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg}`}>
                     <option>完好</option>
                     <option>良好</option>
                     <option>一般</option>
@@ -500,28 +496,28 @@ export default function ListPage({ onNavigate }: ListPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">购入价格 (¥)</label>
-                  <input name="purchasePrice" type="number" defaultValue={editItem.purchasePrice} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
+                  <input type="number" value={editForm.purchasePrice} onChange={e => setEditForm(f => ({ ...f, purchasePrice: Number(e.target.value) || 0 }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">预估价值 (¥)</label>
-                  <input name="estimatedValue" type="number" defaultValue={editItem.estimatedValue} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
+                  <input type="number" value={editForm.estimatedValue} onChange={e => setEditForm(f => ({ ...f, estimatedValue: Number(e.target.value) || 0 }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">入手渠道</label>
-                  <input name="source" type="text" defaultValue={editItem.source} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
+                  <input type="text" value={editForm.source} onChange={e => setEditForm(f => ({ ...f, source: e.target.value }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink-600 mb-1.5">入手日期</label>
-                  <input name="date" type="date" defaultValue={editItem.date} className="input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer" />
+                  <input type="date" value={editForm.date} onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm cursor-pointer" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-ink-600 mb-1.5">藏品描述</label>
-                <textarea name="description" rows={3} defaultValue={editItem.description} className="input-field w-full rounded-xl px-4 py-2.5 text-sm resize-none" />
+                <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="input-field w-full rounded-xl px-4 py-2.5 text-sm resize-none" />
               </div>
 
               {/* Tags */}
