@@ -1,14 +1,36 @@
+import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
 import ForceGraph from '../components/graphs/ForceGraph'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { correlationsApi } from '../api/services'
 import type { GraphNode, GraphLink } from '../data/graphData'
 
 const selectArrowBg = "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]"
 
+const dimensionOptions = [
+  { label: '材质', value: 'material' },
+  { label: '年代', value: 'era' },
+  { label: '工艺', value: 'craft' },
+  { label: '品牌', value: 'brand' },
+]
+
+const eraOptions = ['', 'Victorian', 'Art Nouveau', 'Art Deco', 'Retro']
+
 export default function CorrelationPage() {
-  const { data: graphData } = useFetch(() => correlationsApi.getGraph())
-  const { data: strongPairs } = useFetch(() => correlationsApi.getStrongPairs({ limit: 5 }))
+  const [dimension, setDimension] = useState('material')
+  const [era, setEra] = useState('')
+
+  const { data: graphData, error: graphErr, refetch: refetchGraph } = useFetch(
+    () => correlationsApi.getGraph({ dimension, era: era || undefined }),
+    [dimension, era]
+  )
+  const { data: strongPairs, error: pairsErr, refetch: refetchPairs } = useFetch(
+    () => correlationsApi.getStrongPairs({ limit: 5, dimension }),
+    [dimension, era]
+  )
+
+  const error = graphErr || pairsErr
 
   const nodes: GraphNode[] = graphData?.nodes || []
   const links: GraphLink[] = graphData?.links || []
@@ -25,22 +47,34 @@ export default function CorrelationPage() {
         <p className="text-ink-400 mt-1 text-sm">探索藏品之间的隐秘联系</p>
       </div>
 
+      <ErrorBanner message={error} />
+
       {/* Filter bar */}
       <div className="px-6 md:px-8 flex flex-wrap gap-3 mb-6">
-        <select className={`input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg} pr-10`}>
-          <option>关联维度：材质</option>
-          <option>关联维度：年代</option>
-          <option>关联维度：工艺</option>
-          <option>关联维度：品牌</option>
+        <select
+          value={dimension}
+          onChange={e => setDimension(e.target.value)}
+          className={`input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg} pr-10`}
+        >
+          {dimensionOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>关联维度：{opt.label}</option>
+          ))}
         </select>
-        <select className={`input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg} pr-10`}>
-          <option>年代：全部</option>
-          <option>Victorian</option>
-          <option>Art Nouveau</option>
-          <option>Art Deco</option>
-          <option>Retro</option>
+        <select
+          value={era}
+          onChange={e => setEra(e.target.value)}
+          className={`input-field rounded-xl px-4 py-2.5 text-sm cursor-pointer appearance-none ${selectArrowBg} pr-10`}
+        >
+          {eraOptions.map(e => (
+            <option key={e} value={e}>{e ? e : '年代：全部'}</option>
+          ))}
         </select>
-        <button className="btn-secondary px-4 py-2.5 rounded-xl text-sm cursor-pointer">重新分析</button>
+        <button
+          onClick={() => { refetchGraph(); refetchPairs() }}
+          className="btn-secondary px-4 py-2.5 rounded-xl text-sm cursor-pointer"
+        >
+          重新分析
+        </button>
       </div>
 
       <div className="px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">

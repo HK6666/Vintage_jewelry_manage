@@ -1,5 +1,6 @@
 import GlassCard from '../components/ui/GlassCard'
 import ForceGraph from '../components/graphs/ForceGraph'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { knowledgeApi } from '../api/services'
 import type { GraphNode, GraphLink } from '../data/graphData'
@@ -13,7 +14,7 @@ const defaultLegend = [
 ]
 
 export default function KnowledgePage() {
-  const { data: graphData } = useFetch(() => knowledgeApi.getGraph())
+  const { data: graphData, error } = useFetch(() => knowledgeApi.getGraph())
 
   const nodes: GraphNode[] = graphData?.nodes || []
   const links: GraphLink[] = graphData?.links || []
@@ -60,6 +61,8 @@ export default function KnowledgePage() {
           </div>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {/* Legend */}
       <div className="px-6 md:px-8 flex flex-wrap gap-4 mb-4">

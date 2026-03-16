@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { brandsApi } from '../api/services'
 import type { BrandItem } from '../api/types'
 
 export default function BrandManagePage() {
-  const { data: brands, refetch } = useFetch(() => brandsApi.list())
+  const { data: brands, error, refetch } = useFetch(() => brandsApi.list())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', nameEn: '', country: '', description: '' })
@@ -27,7 +28,7 @@ export default function BrandManagePage() {
     setEditingId(brand.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { try { await brandsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await brandsApi.remove(id); refetch() } catch { /* ignore */ } }
 
   return (
     <div className="fade-in">
@@ -43,6 +44,8 @@ export default function BrandManagePage() {
           </button>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {showAdd && (
         <div className="px-4 sm:px-6 md:px-8 mb-6">

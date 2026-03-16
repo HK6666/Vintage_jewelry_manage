@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { categoriesApi } from '../api/services'
 import type { CategoryItem } from '../api/types'
 
 export default function CategoryManagePage() {
-  const { data: categories, refetch } = useFetch(() => categoriesApi.list())
+  const { data: categories, error, refetch } = useFetch(() => categoriesApi.list())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', nameEn: '', description: '' })
@@ -27,7 +28,7 @@ export default function CategoryManagePage() {
     setEditingId(cat.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { try { await categoriesApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await categoriesApi.remove(id); refetch() } catch { /* ignore */ } }
 
   const totalCount = items.reduce((sum, c) => sum + c.count, 0)
 
@@ -45,6 +46,8 @@ export default function CategoryManagePage() {
           </button>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       <div className="px-4 sm:px-6 md:px-8 grid grid-cols-3 gap-3 sm:gap-4 mb-6">
         <div className="stat-card rounded-2xl p-3 sm:p-4 text-center">

@@ -10,10 +10,14 @@ logger = logging.getLogger(__name__)
 bp = Blueprint('upload', __name__)
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
+ALLOWED_MIMETYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(filename, content_type=None):
+    ext_ok = '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    if content_type:
+        return ext_ok and content_type in ALLOWED_MIMETYPES
+    return ext_ok
 
 
 @bp.route('/image', methods=['POST'])
@@ -28,7 +32,7 @@ def upload_image():
     if f.filename == '':
         return error('文件名为空', 400)
 
-    if not allowed_file(f.filename):
+    if not allowed_file(f.filename, f.content_type):
         return error('不支持的文件格式，仅支持 JPG/PNG/WebP/GIF', 400)
 
     now = datetime.now(timezone.utc)

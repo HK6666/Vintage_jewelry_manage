@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { colorsApi } from '../api/services'
 import type { ColorItem } from '../api/types'
 
 export default function ColorManagePage() {
-  const { data: colors, refetch } = useFetch(() => colorsApi.list())
+  const { data: colors, error, refetch } = useFetch(() => colorsApi.list())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', nameEn: '', hex: '#D4A853', description: '' })
@@ -27,7 +28,7 @@ export default function ColorManagePage() {
     setEditingId(color.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { try { await colorsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await colorsApi.remove(id); refetch() } catch { /* ignore */ } }
 
   const isGradient = (hex: string) => hex.startsWith('linear-gradient')
 
@@ -45,6 +46,8 @@ export default function ColorManagePage() {
           </button>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {showAdd && (
         <div className="px-4 sm:px-6 md:px-8 mb-6">

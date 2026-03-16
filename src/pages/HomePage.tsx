@@ -5,6 +5,7 @@ import { dashboardApi, collectionsApi } from '../api/services'
 import StatCard from '../components/ui/StatCard'
 import GlassCard from '../components/ui/GlassCard'
 import ChartWrapper from '../components/charts/ChartWrapper'
+import ErrorBanner from '../components/ui/ErrorBanner'
 
 interface HomePageProps {
   onNavigate: (page: string) => void
@@ -50,11 +51,13 @@ function formatValue(val: number): string {
 }
 
 export default function HomePage({ onNavigate }: HomePageProps) {
-  const { data: stats } = useFetch(() => dashboardApi.getStats())
-  const { data: trend } = useFetch(() => dashboardApi.getIntakeTrend())
-  const { data: catDist } = useFetch(() => dashboardApi.getCategoryDistribution())
-  const { data: eraDist } = useFetch(() => dashboardApi.getEraDistribution())
-  const { data: recentItems } = useFetch(() => collectionsApi.getRecent(4))
+  const { data: stats, error: statsErr } = useFetch(() => dashboardApi.getStats())
+  const { data: trend, error: trendErr } = useFetch(() => dashboardApi.getIntakeTrend())
+  const { data: catDist, error: catErr } = useFetch(() => dashboardApi.getCategoryDistribution())
+  const { data: eraDist, error: eraErr } = useFetch(() => dashboardApi.getEraDistribution())
+  const { data: recentItems, error: recentErr } = useFetch(() => collectionsApi.getRecent(4))
+
+  const error = statsErr || trendErr || catErr || eraErr || recentErr
 
   return (
     <div className="fade-in">
@@ -73,6 +76,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {/* Stats Cards */}
       <div className="px-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">

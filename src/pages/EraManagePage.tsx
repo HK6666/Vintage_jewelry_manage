@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { erasApi } from '../api/services'
 import type { EraItem } from '../api/types'
 
 export default function EraManagePage() {
-  const { data: eras, refetch } = useFetch(() => erasApi.list())
+  const { data: eras, error, refetch } = useFetch(() => erasApi.list())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', nameEn: '', period: '', description: '' })
@@ -39,6 +40,7 @@ export default function EraManagePage() {
   }
 
   const handleDelete = async (id: number) => {
+    if (!window.confirm('确定要删除吗？')) return
     try {
       await erasApi.remove(id)
       refetch()
@@ -66,6 +68,8 @@ export default function EraManagePage() {
           </button>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {/* Summary stats */}
       <div className="px-4 sm:px-6 md:px-8 grid grid-cols-3 gap-3 sm:gap-4 mb-6">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 import { useFetch } from '../api/hooks'
 import { materialsApi } from '../api/services'
 import type { MaterialItem } from '../api/types'
@@ -16,7 +17,7 @@ const materialCategories = ['贵金属', '宝石', '有机材质', '工艺材质
 const selectArrowBg = "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236B5B4A%22%20d%3D%22M2%204l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[center_right_1rem]"
 
 export default function MaterialManagePage() {
-  const { data: materials, refetch } = useFetch(() => materialsApi.list())
+  const { data: materials, error, refetch } = useFetch(() => materialsApi.list())
   const [editingId, setEditingId] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [filterCat, setFilterCat] = useState<string>('全部')
@@ -40,7 +41,7 @@ export default function MaterialManagePage() {
     setEditingId(mat.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { try { await materialsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await materialsApi.remove(id); refetch() } catch { /* ignore */ } }
 
   return (
     <div className="fade-in">
@@ -56,6 +57,8 @@ export default function MaterialManagePage() {
           </button>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       <div className="px-4 sm:px-6 md:px-8 mb-6">
         <div className="flex flex-wrap gap-2">

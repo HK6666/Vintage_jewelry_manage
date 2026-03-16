@@ -1,8 +1,9 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useFetch } from '../api/hooks'
 import { collectionsApi, categoriesApi, erasApi, materialsApi, brandsApi, colorsApi } from '../api/services'
 import type { CollectionItem } from '../api/types'
 import GlassCard from '../components/ui/GlassCard'
+import ErrorBanner from '../components/ui/ErrorBanner'
 
 interface ListPageProps {
   onNavigate: (page: string) => void
@@ -51,7 +52,9 @@ export default function ListPage({ onNavigate }: ListPageProps) {
     return collectionsApi.list(params)
   }, [page, keyword, activeCat])
 
-  const { data, loading, refetch } = useFetch(fetchCollections, [page, keyword, activeCat])
+  const { data, loading, error, refetch } = useFetch(fetchCollections, [page, keyword, activeCat])
+
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, [page])
 
   const items = data?.items || []
   const total = data?.total || 0
@@ -230,6 +233,8 @@ export default function ListPage({ onNavigate }: ListPageProps) {
           </div>
         </div>
       </div>
+
+      <ErrorBanner message={error} />
 
       {/* Filter Tags */}
       <div className="px-6 md:px-8 flex flex-wrap gap-2 mb-6">

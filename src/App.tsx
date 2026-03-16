@@ -52,8 +52,12 @@ export default function App() {
     setUser(null)
   }
 
-  // Show nothing while checking auth
-  if (!authChecked) return null
+  // Show loading spinner while checking auth
+  if (!authChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-ivory-50">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-300 border-t-primary-600" />
+    </div>
+  )
 
   // Show login page if not authenticated
   if (!user) {

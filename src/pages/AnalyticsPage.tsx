@@ -4,6 +4,7 @@ import { useFetch } from '../api/hooks'
 import { analyticsApi } from '../api/services'
 import GlassCard from '../components/ui/GlassCard'
 import ChartWrapper from '../components/charts/ChartWrapper'
+import ErrorBanner from '../components/ui/ErrorBanner'
 
 function formatValue(val: number): string {
   if (val >= 1_000_000) return `¥${(val / 1_000_000).toFixed(1)}M`
@@ -12,12 +13,14 @@ function formatValue(val: number): string {
 }
 
 export default function AnalyticsPage() {
-  const { data: summary } = useFetch(() => analyticsApi.getSummary())
-  const { data: valueMat } = useFetch(() => analyticsApi.getValueByMaterial())
-  const { data: heatmap } = useFetch(() => analyticsApi.getEraCategoryHeatmap())
-  const { data: statusDist } = useFetch(() => analyticsApi.getStatusDistribution())
-  const { data: sourceDist } = useFetch(() => analyticsApi.getSourceDistribution())
-  const { data: valueTrend } = useFetch(() => analyticsApi.getValueTrend(12))
+  const { data: summary, error: summaryErr } = useFetch(() => analyticsApi.getSummary())
+  const { data: valueMat, error: valueMatErr } = useFetch(() => analyticsApi.getValueByMaterial())
+  const { data: heatmap, error: heatmapErr } = useFetch(() => analyticsApi.getEraCategoryHeatmap())
+  const { data: statusDist, error: statusErr } = useFetch(() => analyticsApi.getStatusDistribution())
+  const { data: sourceDist, error: sourceErr } = useFetch(() => analyticsApi.getSourceDistribution())
+  const { data: valueTrend, error: trendErr } = useFetch(() => analyticsApi.getValueTrend(12))
+
+  const error = summaryErr || valueMatErr || heatmapErr || statusErr || sourceErr || trendErr
 
   const hmColors = [chartColors.gold, chartColors.wine, chartColors.goldLight, chartColors.green, chartColors.blue, chartColors.amber]
 
@@ -27,6 +30,8 @@ export default function AnalyticsPage() {
         <h2 className="font-heading text-3xl font-bold text-ink-800">数据分析</h2>
         <p className="text-ink-400 mt-1 text-sm">深度洞察您的藏品数据</p>
       </div>
+
+      <ErrorBanner message={error} />
 
       {/* Summary stats */}
       <div className="px-6 md:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

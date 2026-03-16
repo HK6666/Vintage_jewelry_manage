@@ -1,4 +1,4 @@
-import { get, post, put, del, upload, setToken, clearToken } from './client'
+import { get, post, put, del, upload, setToken, setRefreshToken, clearToken } from './client'
 import type {
   CollectionItem, EraItem, CategoryItem, MaterialItem, BrandItem, ColorItem,
   PaginatedResponse, DashboardStats, ChartData, CategoryDistribution,
@@ -11,6 +11,7 @@ export const authApi = {
   login: async (username: string, password: string) => {
     const data = await post<{ token: string; refreshToken: string; expiresIn: number; user: { id: number; username: string } }>('/auth/login', { username, password })
     setToken(data.token)
+    setRefreshToken(data.refreshToken)
     return data
   },
   logout: async () => {

@@ -1,6 +1,11 @@
 from flask import request
 import math
 
+ALLOWED_SORT_FIELDS = {
+    'id', 'name', 'created_at', 'updated_at',
+    'purchase_price', 'estimated_value', 'status', 'date',
+}
+
 
 def parse_pagination():
     page = request.args.get('page', 1, type=int)
@@ -9,6 +14,8 @@ def parse_pagination():
     order = request.args.get('order', 'desc')
     page = max(1, page)
     page_size = max(1, min(100, page_size))
+    if sort_by not in ALLOWED_SORT_FIELDS:
+        sort_by = 'id'
     return page, page_size, sort_by, order
 
 

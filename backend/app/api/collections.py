@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
@@ -107,7 +107,7 @@ def create_collection():
         return error('藏品名称不能为空', 400)
 
     # Dedup: reject if same name was created within last 5 seconds
-    recent_cutoff = datetime.utcnow() - timedelta(seconds=5)
+    recent_cutoff = datetime.now(timezone.utc) - timedelta(seconds=5)
     duplicate = Collection.query.filter(
         Collection.name == data['name'],
         Collection.created_at >= recent_cutoff,

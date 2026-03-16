@@ -70,7 +70,7 @@ def intake_trend():
 def category_distribution():
     logger.info("GET /dashboard/category-distribution")
     categories = Category.query.order_by(Category.id.asc()).all()
-    data = [{'name': c.name, 'nameEn': c.name_en, 'count': c.collections.count()} for c in categories]
+    data = [{'name': c.name, 'nameEn': c.name_en, 'count': c.collections.filter_by(is_deleted=False).count()} for c in categories]
     return success(data)
 
 
@@ -78,5 +78,5 @@ def category_distribution():
 def era_distribution():
     logger.info("GET /dashboard/era-distribution")
     eras = Era.query.order_by(Era.id.asc()).all()
-    data = [{'name': e.name, 'nameEn': e.name_en, 'count': e.collections.count()} for e in eras]
+    data = [{'name': e.name, 'nameEn': e.name_en, 'count': e.collections.filter_by(is_deleted=False).count()} for e in eras]
     return success(data)

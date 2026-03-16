@@ -62,7 +62,7 @@ class Collection(db.Model):
             'era': era.name if era else '',
             'cat': category.name if category else '',
             'material': self.material,
-            'brand': brand.name_en if brand else '',
+            'brand': brand.name if brand else '',
             'colorScheme': color.name if color else '',
             'purchasePrice': self.purchase_price,
             'estimatedValue': self.estimated_value,

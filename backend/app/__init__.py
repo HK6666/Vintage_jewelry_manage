@@ -55,7 +55,8 @@ def _init_extensions(app):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    cors.init_app(app, resources={r'/api/*': {'origins': '*'}})
+    allowed_origins = os.getenv('CORS_ORIGINS', '*').split(',')
+    cors.init_app(app, resources={r'/api/*': {'origins': allowed_origins}})
 
 
 def _register_blueprints(app):
