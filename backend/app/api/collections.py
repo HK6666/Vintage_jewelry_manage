@@ -1,14 +1,13 @@
 import logging
-import os
-import uuid
 from datetime import datetime, timedelta
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from ..extensions import db
 from ..models import Collection, Image, Tag, Era, Category, Brand, Color
 from ..utils.response import success, error
 from ..utils.pagination import parse_pagination, paginated_response
+from ..utils.storage import upload_file, delete_file
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('collections', __name__)
@@ -289,22 +288,16 @@ def upload_images(id):
     if not files:
         return error('请选择图片文件', 400)
 
-    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'collections', str(id))
-    os.makedirs(upload_dir, exist_ok=True)
-
     max_sort = db.session.query(db.func.max(Image.sort)).filter_by(collection_id=id).scalar() or 0
     created_images = []
 
     for f in files:
-        # Use UUID filename to avoid collisions from non-ASCII names or duplicates
         orig = secure_filename(f.filename) or 'image'
-        ext = orig.rsplit('.', 1)[1].lower() if '.' in orig else 'jpg'
-        filename = f'{uuid.uuid4().hex}.{ext}'
-        filepath = os.path.join(upload_dir, filename)
-        f.save(filepath)
+        prefix = f'collections/{id}'
+        url, filename, size = upload_file(f, orig, prefix)
 
         max_sort += 1
-        img = Image(collection_id=id, url=f'/uploads/collections/{id}/{filename}', sort=max_sort)
+        img = Image(collection_id=id, url=url, sort=max_sort)
         db.session.add(img)
         created_images.append(img)
 
@@ -327,6 +320,7 @@ def delete_image(id, image_id):
         return error('图片不存在', 404)
 
     try:
+        delete_file(img.url)
         db.session.delete(img)
         db.session.commit()
         logger.info(f"Deleted image id={image_id}")

@@ -90,3 +90,42 @@ def _register_cli(app):
         """Create all tables."""
         db.create_all()
         print('Database tables created.')
+
+    @app.cli.command('migrate-to-minio')
+    def migrate_to_minio_command():
+        """Migrate local uploads to MinIO and update DB URLs."""
+        import os
+        from .models import Image
+        from .utils.storage import upload_file, _get_client, BUCKET
+        import io
+
+        upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+        images = Image.query.all()
+        migrated = 0
+
+        for img in images:
+            if not img.url or not img.url.startswith('/uploads/'):
+                continue
+
+            # /uploads/collections/12/xxx.jpg -> collections/12/xxx.jpg
+            rel_path = img.url[len('/uploads/'):]
+            local_path = os.path.join(upload_folder, rel_path)
+
+            if not os.path.exists(local_path):
+                print(f'  SKIP (file missing): {local_path}')
+                continue
+
+            # Upload to MinIO
+            object_name = rel_path  # e.g. collections/12/xxx.jpg
+            client = _get_client()
+            with open(local_path, 'rb') as f:
+                data = f.read()
+                client.put_object(BUCKET, object_name, io.BytesIO(data), len(data))
+
+            # Update DB URL
+            img.url = f'/storage/{object_name}'
+            migrated += 1
+            print(f'  OK: {local_path} -> {img.url}')
+
+        db.session.commit()
+        print(f'Migration complete: {migrated}/{len(images)} images migrated.')

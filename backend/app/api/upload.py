@@ -1,11 +1,10 @@
 import logging
-import os
-import uuid
 from datetime import datetime, timezone
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 from ..utils.response import success, error
+from ..utils.storage import upload_file
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('upload', __name__)
@@ -32,19 +31,10 @@ def upload_image():
     if not allowed_file(f.filename):
         return error('不支持的文件格式，仅支持 JPG/PNG/WebP/GIF', 400)
 
-    usage = request.form.get('usage', 'other')
     now = datetime.now(timezone.utc)
-    sub_dir = os.path.join(str(now.year), f'{now.month:02d}')
-    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], sub_dir)
-    os.makedirs(upload_dir, exist_ok=True)
+    prefix = f'{now.year}/{now.month:02d}'
 
-    ext = f.filename.rsplit('.', 1)[1].lower()
-    filename = f'{uuid.uuid4().hex}.{ext}'
-    filepath = os.path.join(upload_dir, filename)
-    f.save(filepath)
-
-    file_size = os.path.getsize(filepath)
-    url = f'/uploads/{sub_dir}/{filename}'
+    url, filename, file_size = upload_file(f, secure_filename(f.filename) or 'image', prefix)
 
     logger.info(f"Uploaded image: {url}, size: {file_size}")
     return success({
