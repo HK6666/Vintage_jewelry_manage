@@ -112,13 +112,13 @@ No test framework is configured.
 
 ## Deployment (Docker Compose)
 
-服务器地址: `43.247.134.107`，访问端口 `8080`。
+服务器地址: `43.247.134.107`，访问端口 `9527`。
 
 ### Docker 架构
 
 ```
 docker-compose.yml
-├── nginx 容器 (端口 8080:80)
+├── nginx 容器 (端口 9527:80)
 │   ├── 托管 dist/ 前端静态文件
 │   └── 反代 /api/ → backend:5000
 └── backend 容器 (内部端口 5000)
@@ -156,11 +156,11 @@ docker compose up -d --build
 docker compose exec backend flask init-db
 docker compose exec backend flask seed
 
-# 6. 防火墙放行 8080 端口 (如果需要)
-ufw allow 8080/tcp 2>/dev/null || true
+# 6. 防火墙放行 9527 端口 (如果需要)
+ufw allow 9527/tcp 2>/dev/null || true
 ```
 
-部署完成后访问: `http://43.247.134.107:8080`
+部署完成后访问: `http://43.247.134.107:9527`
 登录账号: `admin` / `admin123321`
 
 ### 更新前端代码

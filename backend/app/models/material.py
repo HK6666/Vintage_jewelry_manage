@@ -14,6 +14,19 @@ class Material(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
 
+    @property
+    def collection_count(self):
+        from .collection import Collection
+        return Collection.query.filter(
+            Collection.is_deleted == False,
+            db.or_(
+                Collection.material == self.name,
+                Collection.material.like(self.name + '/%'),
+                Collection.material.like('%/' + self.name),
+                Collection.material.like('%/' + self.name + '/%'),
+            )
+        ).count()
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -21,7 +34,7 @@ class Material(db.Model):
             'nameEn': self.name_en,
             'category': self.category,
             'description': self.description,
-            'count': 0,
+            'count': self.collection_count,
             'createdAt': self.created_at.isoformat() + 'Z' if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() + 'Z' if self.updated_at else None,
         }

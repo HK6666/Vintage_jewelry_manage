@@ -20,7 +20,7 @@ export default function CategoryManagePage() {
     try {
       if (editingId !== null) { await categoriesApi.update(editingId, form) } else { await categoriesApi.create(form) }
       resetForm(); refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const handleEdit = (cat: CategoryItem) => {
@@ -28,7 +28,7 @@ export default function CategoryManagePage() {
     setEditingId(cat.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await categoriesApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await categoriesApi.remove(id); refetch() } catch { alert('操作失败，请重试') } }
 
   const totalCount = items.reduce((sum, c) => sum + c.count, 0)
 

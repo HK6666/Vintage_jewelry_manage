@@ -29,7 +29,7 @@ export default function EraManagePage() {
       }
       resetForm()
       refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const handleEdit = (era: EraItem) => {
@@ -44,7 +44,7 @@ export default function EraManagePage() {
     try {
       await erasApi.remove(id)
       refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const totalCount = items.reduce((sum, e) => sum + e.count, 0)

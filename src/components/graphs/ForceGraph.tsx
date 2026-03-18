@@ -67,20 +67,27 @@ export default function ForceGraph({
       })
     svg.call(zoom)
 
-    if (showZoomControls) {
-      const zoomInBtn = container.parentElement?.querySelector('[data-zoom="in"]')
-      const zoomOutBtn = container.parentElement?.querySelector('[data-zoom="out"]')
-      const resetBtn = container.parentElement?.querySelector('[data-zoom="reset"]')
+    let zoomInBtn: Element | null | undefined = null
+    let zoomOutBtn: Element | null | undefined = null
+    let resetBtn: Element | null | undefined = null
+    const handleZoomIn = () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 1.3)
+    }
+    const handleZoomOut = () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 0.75)
+    }
+    const handleZoomReset = () => {
+      svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity)
+    }
 
-      zoomInBtn?.addEventListener('click', () => {
-        svg.transition().duration(300).call(zoom.scaleBy, 1.3)
-      })
-      zoomOutBtn?.addEventListener('click', () => {
-        svg.transition().duration(300).call(zoom.scaleBy, 0.75)
-      })
-      resetBtn?.addEventListener('click', () => {
-        svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity)
-      })
+    if (showZoomControls) {
+      zoomInBtn = container.parentElement?.querySelector('[data-zoom="in"]')
+      zoomOutBtn = container.parentElement?.querySelector('[data-zoom="out"]')
+      resetBtn = container.parentElement?.querySelector('[data-zoom="reset"]')
+
+      zoomInBtn?.addEventListener('click', handleZoomIn)
+      zoomOutBtn?.addEventListener('click', handleZoomOut)
+      resetBtn?.addEventListener('click', handleZoomReset)
     }
 
     const simulation = d3
@@ -215,6 +222,9 @@ export default function ForceGraph({
 
     return () => {
       simulation.stop()
+      zoomInBtn?.removeEventListener('click', handleZoomIn)
+      zoomOutBtn?.removeEventListener('click', handleZoomOut)
+      resetBtn?.removeEventListener('click', handleZoomReset)
     }
   }, [nodeData, linkData, groupColors, height, linkDistance, chargeStrength, showZoomControls, groupLabels, variant])
 

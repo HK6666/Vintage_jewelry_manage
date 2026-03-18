@@ -20,7 +20,7 @@ export default function ColorManagePage() {
     try {
       if (editingId !== null) { await colorsApi.update(editingId, form) } else { await colorsApi.create(form) }
       resetForm(); refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const handleEdit = (color: ColorItem) => {
@@ -28,7 +28,7 @@ export default function ColorManagePage() {
     setEditingId(color.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await colorsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await colorsApi.remove(id); refetch() } catch { alert('操作失败，请重试') } }
 
   const isGradient = (hex: string) => hex.startsWith('linear-gradient')
 

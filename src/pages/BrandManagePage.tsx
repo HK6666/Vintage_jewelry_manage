@@ -20,7 +20,7 @@ export default function BrandManagePage() {
     try {
       if (editingId !== null) { await brandsApi.update(editingId, form) } else { await brandsApi.create(form) }
       resetForm(); refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const handleEdit = (brand: BrandItem) => {
@@ -28,7 +28,7 @@ export default function BrandManagePage() {
     setEditingId(brand.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await brandsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await brandsApi.remove(id); refetch() } catch { alert('操作失败，请重试') } }
 
   return (
     <div className="fade-in">

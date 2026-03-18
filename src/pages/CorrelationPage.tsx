@@ -27,7 +27,7 @@ export default function CorrelationPage() {
   )
   const { data: strongPairs, error: pairsErr, refetch: refetchPairs } = useFetch(
     () => correlationsApi.getStrongPairs({ limit: 5, dimension }),
-    [dimension, era]
+    [dimension]
   )
 
   const error = graphErr || pairsErr

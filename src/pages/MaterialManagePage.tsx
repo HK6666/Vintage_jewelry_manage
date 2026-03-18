@@ -33,7 +33,7 @@ export default function MaterialManagePage() {
     try {
       if (editingId !== null) { await materialsApi.update(editingId, form) } else { await materialsApi.create(form) }
       resetForm(); refetch()
-    } catch { /* ignore */ }
+    } catch { alert('操作失败，请重试') }
   }
 
   const handleEdit = (mat: MaterialItem) => {
@@ -41,7 +41,7 @@ export default function MaterialManagePage() {
     setEditingId(mat.id); setShowAdd(true); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await materialsApi.remove(id); refetch() } catch { /* ignore */ } }
+  const handleDelete = async (id: number) => { if (!window.confirm('确定要删除吗？')) return; try { await materialsApi.remove(id); refetch() } catch { alert('操作失败，请重试') } }
 
   return (
     <div className="fade-in">

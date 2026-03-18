@@ -51,12 +51,18 @@ def era_category_heatmap():
     era_names = [e.name_en for e in eras]
     cat_names = [c.name for c in categories]
 
+    counts = db.session.query(
+        Collection.era_id,
+        Collection.category_id,
+        func.count(Collection.id),
+    ).filter(Collection.is_deleted == False).group_by(
+        Collection.era_id, Collection.category_id
+    ).all()
+    count_map = {(row[0], row[1]): row[2] for row in counts}
+
     matrix = []
     for era in eras:
-        row = []
-        for cat in categories:
-            count = Collection.query.filter_by(is_deleted=False, era_id=era.id, category_id=cat.id).count()
-            row.append(count)
+        row = [count_map.get((era.id, cat.id), 0) for cat in categories]
         matrix.append(row)
 
     return success({

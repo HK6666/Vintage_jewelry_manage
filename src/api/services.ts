@@ -132,5 +132,10 @@ export const knowledgeApi = {
 
 // Tags
 export const tagsApi = {
-  list: (keyword = '', limit = 20) => get<{ name: string; count: number }[]>(`/tags?keyword=${keyword}&limit=${limit}`),
+  list: (keyword = '', limit = 20) => {
+    const qs = new URLSearchParams()
+    if (keyword) qs.set('keyword', keyword)
+    qs.set('limit', String(limit))
+    return get<{ name: string; count: number }[]>(`/tags?${qs}`)
+  },
 }

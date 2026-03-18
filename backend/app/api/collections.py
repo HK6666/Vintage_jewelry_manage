@@ -334,9 +334,14 @@ def delete_image(id, image_id):
 @bp.route('/<int:id>/images/sort', methods=['PUT'])
 @jwt_required()
 def sort_images(id):
+    logger.info(f"PUT /collections/{id}/images/sort")
+    item = db.session.get(Collection, id)
+    if not item or item.is_deleted:
+        return error('藏品不存在', 404)
+
     data = request.get_json(silent=True) or {}
     image_ids = data.get('imageIds', [])
-    logger.info(f"PUT /collections/{id}/images/sort - imageIds: {image_ids}")
+    logger.info(f"Sort imageIds: {image_ids}")
 
     for idx, img_id in enumerate(image_ids):
         img = Image.query.filter_by(id=img_id, collection_id=id).first()
@@ -354,6 +359,7 @@ def sort_images(id):
 
 
 @bp.route('/recent', methods=['GET'])
+@jwt_required()
 def recent_collections():
     limit = request.args.get('limit', 10, type=int)
     logger.info(f"GET /collections/recent - limit: {limit}")
