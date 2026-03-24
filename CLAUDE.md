@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   └── .env.example      # 环境变量模板
 ├── docker/
 │   └── nginx.conf        # nginx 容器配置 (前端静态文件 + API 反代)
-├── docker-compose.yml    # 编排: nginx + backend 两个容器
+├── docker-compose.yml    # 编排: postgres + nginx + backend 三个容器
 └── .env.production       # 前端构建 API 地址 (不提交, 值为 /api/v1)
 ```
 
@@ -90,6 +90,8 @@ No test framework is configured.
 
 **Pagination**: `collectionsApi.list()` returns `{ items, total, page, pageSize, totalPages }`
 
+**Database**: PostgreSQL 16 (Docker container, port `15872:5432`, volume `pg_data`). Credentials: `admin`/`admin`, database `postgres`.
+
 **Models**: User, Collection, Era, Category, Material, Brand, Color, Tag. Collection has foreign keys to Era, Category, Brand, Color. Many-to-many with Tag via `collection_tag` table.
 
 **Key routes**:
@@ -118,12 +120,13 @@ No test framework is configured.
 
 ```
 docker-compose.yml
+├── postgres 容器 (内部端口 5432)
+│   └── PostgreSQL 16, 数据持久化到 pg_data volume
 ├── nginx 容器 (端口 9527:80)
 │   ├── 托管 dist/ 前端静态文件
 │   └── 反代 /api/ → backend:5000
 └── backend 容器 (内部端口 5000)
-    ├── gunicorn + Flask
-    └── SQLite 数据库 (Docker volume 持久化)
+    └── gunicorn + Flask
 ```
 
 ### 首次部署 (服务器上从零开始)
@@ -144,7 +147,6 @@ cat > .env << EOF
 FLASK_ENV=production
 SECRET_KEY=${SECRET}
 JWT_SECRET_KEY=${JWT_SECRET}
-DATABASE_URL=sqlite:////app/vintage_vault.db
 UPLOAD_FOLDER=uploads
 EOF
 cd ..
@@ -221,7 +223,7 @@ docker compose logs -f backend             # 后端实时日志
 docker compose logs -f nginx               # nginx 实时日志
 docker compose restart                     # 重启所有容器
 docker compose down                        # 停止并移除容器
-docker compose down -v                     # 停止并移除容器+数据卷(会丢数据库!)
+docker compose down -v                     # 停止并移除容器+数据卷(会丢PostgreSQL数据!)
 docker compose exec backend flask seed     # 重新写入种子数据
 ```
 

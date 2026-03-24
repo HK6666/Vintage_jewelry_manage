@@ -17,14 +17,14 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL', f'sqlite:///{os.path.join(basedir, "vintage_vault.db")}'
+        'DATABASE_URL', 'postgresql://admin:admin@localhost:15872/postgres'
     )
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL', f'sqlite:///{os.path.join(basedir, "data", "vintage_vault.db")}'
+        'DATABASE_URL', 'postgresql://admin:admin@postgres:5432/postgres'
     )
 
 

@@ -1,10 +1,24 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    ports:
+      - "15872:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
   backend:
     build: ./backend
     restart: always
     env_file: ./backend/.env
-    volumes:
-      - backend_data:/app/data
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/postgres
+    depends_on:
+      - postgres
     expose:
       - "5000"
 
@@ -20,4 +34,4 @@ services:
       - backend
 
 volumes:
-  backend_data:
+  pg_data:
