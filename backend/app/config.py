@@ -17,14 +17,14 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL', 'postgresql://admin:admin@localhost:15872/postgres'
+        'DATABASE_URL', 'postgresql://admin:Hk990305@localhost:15872/postgres'
     )
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL', 'postgresql://admin:admin@postgres:5432/postgres'
+        'DATABASE_URL', 'postgresql://admin:Hk990305@postgres:5432/postgres'
     )
 
 
