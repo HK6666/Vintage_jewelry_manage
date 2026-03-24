@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: Hk990305
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports:
       - "15872:5432"
     volumes:
@@ -16,10 +16,10 @@ services:
     restart: always
     env_file: ./backend/.env
     environment:
-      DATABASE_URL: postgresql://admin:Hk990305@postgres:5432/postgres
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-postgres}
       MINIO_ENDPOINT: host.docker.internal:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: '!Hk990305'
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
